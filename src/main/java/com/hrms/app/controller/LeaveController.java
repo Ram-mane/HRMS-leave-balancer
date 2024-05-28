@@ -41,15 +41,15 @@ public class LeaveController {
     }
 
     @PostMapping("/approveLeave")
-    public ResponseEntity<LeaveRequest> approveLeave(@Param("empEmail") String empEmail,
+    public String approveLeave(@Param("empEmail") String empEmail,
             @RequestBody LeaveRequest leaveRequest) {
 
         try{
             leaveService.aproveLeave(leaveRequest, empEmail);
-            return ResponseEntity.ok(leaveRequest);
+            return "Leave approved successfully";
         }
         catch (Exception e){
-            return ResponseEntity.badRequest().build();
+            return "Error: " + e.getMessage() + "\n" + e.getStackTrace();
         }
     }
 }
