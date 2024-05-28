@@ -1,21 +1,20 @@
 package com.hrms.app.utilData;
 
-import com.hrms.app.Enum.EmployeeType;
+//import com.hrms.app.entity.EmployeeType;
 
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.hrms.app.Enum.EmployeeType.*;
+;
 
 public class UtilReferenceData {
 
     //table to keep track of no. if casual leaves per employee
-    public static Map<EmployeeType, Integer> monthlyLeaveAllocationMap = new HashMap<>() {{
-        monthlyLeaveAllocationMap.put(INTERN, 1);
-        monthlyLeaveAllocationMap.put(REGULAR, 2);
-        monthlyLeaveAllocationMap.put(MST, 2);
-    }};
+//    public static Map<EmployeeType, Integer> monthlyLeaveAllocationMap = new HashMap<>() {{
+//        monthlyLeaveAllocationMap.put(INTERN, 1);
+//        monthlyLeaveAllocationMap.put(REGULAR, 2);
+//        monthlyLeaveAllocationMap.put(MST, 2);
+//    }};
 
     //common table for national holiday
     public static Map<String, LocalDate> nationalHolidays = new HashMap<>() {{

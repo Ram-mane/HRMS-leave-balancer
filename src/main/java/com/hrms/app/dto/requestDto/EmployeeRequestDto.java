@@ -1,7 +1,9 @@
 package com.hrms.app.dto.requestDto;
 
-import com.hrms.app.Enum.Designation;
+import com.hrms.app.entity.Designation;
+//import com.hrms.app.Enum.Designation;
 import com.hrms.app.Enum.EmployeeType;
+import com.hrms.app.entity.Designation;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -19,7 +21,7 @@ public class EmployeeRequestDto {
     String empPassword;
     String empPhone;
     EmployeeType empType;
-    Designation empDesignation;
+    String empDesignation;
     String imgUrl;
     int empSalary;
     LocalDate dateOfBirth;

@@ -37,7 +37,7 @@ public class Leave {
     @Enumerated(EnumType.STRING)
     LeaveStatus leaveStatus;
 
-    int leaveDuration;
+    double leaveDuration;
 
     LocalDate leaveStartDate;
 

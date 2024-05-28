@@ -1,25 +1,37 @@
 package com.hrms.app.service.impl;
 
+import com.google.api.core.ApiFuture;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.hrms.app.Enum.LeaveStatus;
 import com.hrms.app.Enum.LeaveType;
+import com.hrms.app.config.FirebaseInitialization;
 import com.hrms.app.dto.requestDto.LeaveRequestDto;
+import com.hrms.app.dto.responseDto.EmployeeLeaveResponseDto;
+import com.hrms.app.dto.responseDto.PageResponseDto;
 import com.hrms.app.entity.Employee;
 import com.hrms.app.entity.Leave;
 import com.hrms.app.dto.responseDto.LeaveResponseDto;
+import com.hrms.app.mapper.EmployeeMapper;
 import com.hrms.app.mapper.LeaveMapper;
 import com.hrms.app.repository.EmpInfoRepository;
 import com.hrms.app.repository.LeaveRepository;
+import com.hrms.app.service.FirebaseService;
 import com.hrms.app.service.LeaveService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.time.temporal.ChronoUnit.DAYS;
 
 
 @Service
@@ -34,13 +46,16 @@ public class LeaveServiceImpl implements LeaveService {
     @Autowired
     private UtilityDataServiceImpl utilityDataService;
 
+    @Autowired
+    private FirebaseService firebaseService;
+
     @Override
     public LeaveResponseDto applyLeave(LeaveRequestDto leaveRequestDto) {
-        System.out.println("Yo i'm at start");
+
         if(leaveRequestDto == null)
             throw new RuntimeException("Invalid Leave Request");
 
-        if(leaveRequestDto.getLeaveEndDate().isBefore(leaveRequestDto.getLeaveStartDate()))
+        if(!leaveRequestDto.getLeaveStartDate().isAfter(LocalDate.now()) || leaveRequestDto.getLeaveEndDate().isBefore(leaveRequestDto.getLeaveStartDate()))
             throw new RuntimeException("Enter valid leave duration dates");
 
         Employee employee = empInfoRepository.findByEmpEmail(leaveRequestDto.getEmployeeEmail());
@@ -48,54 +63,74 @@ public class LeaveServiceImpl implements LeaveService {
         if(employee == null)
             throw new RuntimeException("Invalid Employee Email");
 
+
         Leave leave = LeaveMapper.leaveRequestDtoToLeave(leaveRequestDto);
 
+        long days = DAYS.between(leaveRequestDto.getLeaveStartDate(), leaveRequestDto.getLeaveEndDate()) + 1;
+        long leave_duration = (long)leave.getLeaveDuration();
+        if(leave.getLeaveDuration() >= (double)1.0 && days != leave_duration) {
+            throw new RuntimeException("Duration and Leave Dates didn't match");
+        }
+
         leave.setEmployee(employee);
-        System.out.println("Yo i'm at 6");
+
         employee.getLeaveList().add(leave);
-        System.out.println("Yo i'm at 7");
+
+        checkLeaveValidity(leave);
+
         empInfoRepository.save(employee);
 
-      //  Leave savedLeave = employee.getLeaveList().get(0);
-        System.out.println("Yo i'm at end");
+       // Optional<Leave> opLeave1 = leaveRepository.findByEmployeeEmailAndDate(employee.getEmpEmail(), LocalDate.now());
+
         return LeaveMapper.leaveToLeaveResponseDto(leave);
     }
 
     @Override
-    public List<LeaveResponseDto> getPendingLeaveRequest() {
+    public PageResponseDto getPendingLeaveRequest(int pageNo) throws Exception{
 
-       List<Leave> leaveList = leaveRepository.getPendingLeaveRequest();
+        int pageSize = firebaseService.getPageSizeLeave();
 
-       if(leaveList.isEmpty())
-           throw new RuntimeException("There are no pending leaves right now");
+        Pageable pageable = PageRequest.of(pageNo-1, pageSize);
 
-       List<LeaveResponseDto> leaveResponseDtoList = new ArrayList<>();
-       for(Leave leave : leaveList) {
-           LeaveResponseDto leaveResponseDto = LeaveMapper.leaveToLeaveResponseDto(leave);
-           leaveResponseDtoList.add(leaveResponseDto);
-       }
+        Page<Leave> page = leaveRepository.getPendingLeaveRequest(pageable);
 
-       return leaveResponseDtoList;
-    }
-
-    @Override
-    public List<LeaveResponseDto> getApprovedLeaveRequest() {
-
-        List<Leave> leaveList = leaveRepository.getApprovedLeaveRequest();
-
-        if(leaveList.isEmpty())
-            throw new RuntimeException("There are no approved leaves right now");
+//        if(leaveList.isEmpty())
+//            throw new RuntimeException("There are no pending leaves right now");
 
         List<LeaveResponseDto> leaveResponseDtoList = new ArrayList<>();
-        for(Leave leave : leaveList) {
+        for(Leave leave : page) {
             leaveResponseDtoList.add(LeaveMapper.leaveToLeaveResponseDto(leave));
         }
 
-        return leaveResponseDtoList;
+       return new PageResponseDto(leaveResponseDtoList, page.getNumber()+1, page.getSize(),
+                                page.getTotalPages(), page.getTotalElements(), page.isLast());
     }
 
     @Override
-    public List<LeaveResponseDto> getAllLeaveRequest(String empEmail) {
+    public PageResponseDto getApprovedLeaveRequest(int pageNo) throws Exception{
+
+        int pageSize = firebaseService.getPageSizeLeave();
+
+        Pageable pageable = PageRequest.of(pageNo-1, pageSize);
+
+        Page<Leave> page = leaveRepository.getApprovedLeaveRequest(pageable);
+
+//        if(page.isEmpty())
+//            throw new RuntimeException("There are no approved leaves right now");
+
+        List<LeaveResponseDto> leaveResponseDtoList = new ArrayList<>();
+        for(Leave leave : page) {
+            leaveResponseDtoList.add(LeaveMapper.leaveToLeaveResponseDto(leave));
+        }
+
+        return new PageResponseDto(leaveResponseDtoList, page.getNumber()+1, page.getSize(),
+                                    page.getTotalPages(), page.getTotalElements(), page.isLast());
+    }
+
+    @Override
+    public PageResponseDto getAllLeaveRequest(String empEmail, int pageNo, LeaveStatus leaveStatus) throws Exception{
+
+        int pageSize = firebaseService.getPageSizeLeave();
 
         Employee employee = empInfoRepository.findByEmpEmail(empEmail);
 
@@ -107,12 +142,32 @@ public class LeaveServiceImpl implements LeaveService {
         if(leaveList.isEmpty())
             throw new RuntimeException("There are no leaves request right now");
 
+        if(leaveStatus != null) {
+            leaveList = leaveList.stream()
+                    .filter(leave -> leave.getLeaveStatus() == leaveStatus)
+                    .collect(Collectors.toList());
+        }
+
+        int totalPages = (int) Math.ceil((double) leaveList.size() / pageSize);
+
+        // Check if requested page number exceeds total pages
+        if (pageNo > totalPages) {
+            // Return an empty page or handle as appropriate for your application
+            return new PageResponseDto(new ArrayList<>(), pageNo, pageSize, totalPages, leaveList.size(), true);
+        }
+
+        int start = (pageNo-1)*pageSize;
+        int end = Math.min(start+pageSize, leaveList.size());
+        Pageable pageable = PageRequest.of(pageNo-1, pageSize);
+        Page<Leave> page = new PageImpl<>(leaveList.subList(start, end), pageable, leaveList.size());
+
         List<LeaveResponseDto> leaveResponseDtoList = new ArrayList<>();
-        for(Leave leave : leaveList) {
+        for(Leave leave : page) {
             leaveResponseDtoList.add(LeaveMapper.leaveToLeaveResponseDto(leave));
         }
 
-        return leaveResponseDtoList;
+        return new PageResponseDto(leaveResponseDtoList, page.getNumber()+1, page.getSize(), page.getTotalPages(),
+                                    page.getTotalElements(), page.isLast());
     }
 
 
@@ -136,12 +191,11 @@ public class LeaveServiceImpl implements LeaveService {
 
     @Override
     public LeaveResponseDto getLeaveRequest(UUID uniqueLeaveId) {
-        System.out.println("0");
         Leave appliedLeave = leaveRepository.findByUniqueLeaveId(uniqueLeaveId);
-        System.out.println("1");
+
         if(appliedLeave == null)
             throw new RuntimeException("Incorrect leave Id");
-        System.out.println("2");
+
         return LeaveMapper.leaveToLeaveResponseDto(appliedLeave);
 
     }
@@ -162,13 +216,26 @@ public class LeaveServiceImpl implements LeaveService {
 
     }
 
+    @Override
+    public EmployeeLeaveResponseDto getNoOfLeavesLeft(String empEmail) {
+        Employee employee = empInfoRepository.findByEmpEmail(empEmail);
+
+        if (employee == null)
+            throw new RuntimeException("Invalid Employee email id");
+
+        return EmployeeMapper.employeeToEmployeeLeaveResponseDto(employee);
+    }
+
     public void checkLeaveValidity(Leave appliedLeave) {
+
+        if(appliedLeave.getLeaveStartDate().isBefore(LocalDate.now()))
+            throw new RuntimeException("Request has became invalid now");
 
         Employee employee = appliedLeave.getEmployee();
 
         LeaveType leaveType = appliedLeave.getLeaveType();
 
-        int duration = appliedLeave.getLeaveDuration();
+        double duration = appliedLeave.getLeaveDuration();
 
         LocalDate leaveDate = appliedLeave.getLeaveStartDate();
 

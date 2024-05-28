@@ -2,10 +2,12 @@ package com.hrms.app.mapper;
 
 import com.hrms.app.dto.requestDto.EmployeeRequestDto;
 import com.hrms.app.dto.requestDto.EmployeeUpdateRequestDto;
+import com.hrms.app.dto.responseDto.EmployeeLeaveResponseDto;
 import com.hrms.app.dto.responseDto.EmployeeResponseDto;
 import com.hrms.app.entity.Employee;
 import com.hrms.app.utilData.Constants;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,42 +16,34 @@ public class EmployeeMapper {
 
     public static Employee employeeRequestDtoToEmployee(EmployeeRequestDto employeeRequestDto) {
 
-        Employee employee = Employee.builder()
-                                    .empName(employeeRequestDto.getEmpName())
-                                    .empEmail(employeeRequestDto.getEmpEmail())
-                                    .empDesignation(employeeRequestDto.getEmpDesignation())
-                                    .dateOfBirth(employeeRequestDto.getDateOfBirth())
-                                    .empPassword(employeeRequestDto.getEmpPassword())
-                                    .empPhone(employeeRequestDto.getEmpPhone())
-                                    .empType(employeeRequestDto.getEmpType())
-                                    .empSalary(employeeRequestDto.getEmpSalary())
-                                    .imgUrl(employeeRequestDto.getImgUrl())
-                                    .joiningDate(employeeRequestDto.getJoiningDate())
-                                    .build();
-
-        employee.setFlexiLeavesLeft(Constants.flexiLeave);
-        employee.setNationalLeavesLeft(Constants.nationalLeave);
-        employee.setOptionalLeavesLeft(Constants.optionalLeave);
-        employee.setPersonalLeavesLeft(Constants.personalLeave);
-
-        employee.setLastFlexiLeaveTaken(null);
-        employee.setNoOfCompensationWorkDayLeft(0);
-        employee.setDateList(new ArrayList<>());
-        employee.setStatusList(new ArrayList<>());
-        employee.setCompensationWorkDayList(new ArrayList<>());
-
-        employee.setActiveEmployee(true);
-
-        employee.setLeaveList(new ArrayList<>());
-        employee.setAttendanceList(new ArrayList<>());
-        employee.setAttendanceMarked(false);
-
-        employee.setCreatedAt(LocalDateTime.now());
-        employee.setCreatedBy("Admin");
-        employee.setModifiedAt(LocalDateTime.now());
-        employee.setModifiedBy("Admin");
-
-        return employee;
+        return Employee.builder()
+                        .empName(employeeRequestDto.getEmpName())
+                        .empEmail(employeeRequestDto.getEmpEmail())
+                        .dateOfBirth(employeeRequestDto.getDateOfBirth())
+                        .empPassword(employeeRequestDto.getEmpPassword())
+                        .empPhone(employeeRequestDto.getEmpPhone())
+                        .empType(employeeRequestDto.getEmpType())
+                        .empSalary(employeeRequestDto.getEmpSalary())
+                        .imgUrl(employeeRequestDto.getImgUrl())
+                        .joiningDate(employeeRequestDto.getJoiningDate())
+                        .flexiLeavesLeft(Constants.flexiLeave)
+                        .personalLeavesLeft(Constants.personalLeave)
+                        .optionalLeavesLeft(Constants.optionalLeave)
+                        .nationalLeavesLeft(Constants.nationalLeave)
+                        .lastFlexiLeaveTaken(null)
+                        .compensationWorkDayList(new ArrayList<>())
+                        .noOfCompensationWorkDayLeft(0)
+                        .dateList(new ArrayList<>())
+                        .statusList(new ArrayList<>())
+                        .activeEmployee(true)
+                        .leaveList(new ArrayList<>())
+                        .attendanceList(new ArrayList<>())
+                        .attendanceMarked(false)
+                        .createdAt(LocalDateTime.now())
+                        .createdBy("Admin")
+                        .modifiedAt(LocalDateTime.now())
+                        .modifiedBy("Admin")
+                        .build();
 
     }
 
@@ -57,7 +51,6 @@ public class EmployeeMapper {
 
         return EmployeeResponseDto.builder()
                 .empName(employee.getEmpName())
-                .empDesignation(employee.getEmpDesignation())
                 .empEmail(employee.getEmpEmail())
                 .empPhone(employee.getEmpPhone())
                 .empSalary(employee.getEmpSalary())
@@ -66,6 +59,7 @@ public class EmployeeMapper {
                 .joiningDate(employee.getJoiningDate())
                 .dateOfBirth(employee.getDateOfBirth())
                 .activeEmployee(employee.isActiveEmployee())
+                .empDesignation(employee.getEmpDesignation().getDesignation())
                 .build();
 
     }
@@ -76,8 +70,8 @@ public class EmployeeMapper {
         if(employeeUpdateRequestDto.getEmpEmail() != null)
             employee.setEmpEmail(employeeUpdateRequestDto.getEmpEmail());
 
-        if(employeeUpdateRequestDto.getEmpDesignation() != null)
-            employee.setEmpDesignation(employeeUpdateRequestDto.getEmpDesignation());
+//        if(employeeUpdateRequestDto.getEmpDesignation() != null)
+//            employee.setEmpDesignation(employeeUpdateRequestDto.getEmpDesignation());
 
         if(employeeUpdateRequestDto.getEmpPassword() != null)
             employee.setEmpPassword(employeeUpdateRequestDto.getEmpPassword());
@@ -98,5 +92,24 @@ public class EmployeeMapper {
             employee.setImgUrl(employeeUpdateRequestDto.getImgUrl());
 
         return employee;
+    }
+
+    public static EmployeeLeaveResponseDto employeeToEmployeeLeaveResponseDto(Employee employee) {
+        return EmployeeLeaveResponseDto.builder()
+                .empName(employee.getEmpName())
+                .empEmail(employee.getEmpEmail())
+                .empDesignation(employee.getEmpDesignation().getDesignation())
+                .empPhone(employee.getEmpPhone())
+                .empType(employee.getEmpType())
+                .imgUrl(employee.getImgUrl())
+
+                //casual leave += count of compensation work days
+                .casual_leaves_left(employee.getCasualLeavesLeft() + employee.getCompensationWorkDayList().size())
+
+                .flexi_leaves_left(employee.getFlexiLeavesLeft())
+                .personal_leaves_left(employee.getPersonalLeavesLeft())
+                .optional_leaves_left(employee.getOptionalLeavesLeft())
+                .national_leaves_left(employee.getNationalLeavesLeft())
+                .build();
     }
 }

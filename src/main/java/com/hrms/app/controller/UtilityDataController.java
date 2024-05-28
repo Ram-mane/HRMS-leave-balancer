@@ -1,9 +1,8 @@
 package com.hrms.app.controller;
 
+//import com.hrms.app.entity.EmployeeType;
 import com.hrms.app.Enum.EmployeeType;
 import com.hrms.app.service.UtilityDataService;
-import com.hrms.app.service.impl.UtilityDataServiceImpl;
-import com.hrms.app.utilData.UtilReferenceData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -11,27 +10,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.Map;
 
 @RestController
+@CrossOrigin(origins = { "*" })
 @RequestMapping("/util")
 public class UtilityDataController {
 
     @Autowired
     private UtilityDataService utilityDataService;
 
-    @PostMapping("/add_utility_tables")
-    public ResponseEntity addUtilityTables() {
-        try {
-            String message = utilityDataService.addUtilityTables();
-            return new ResponseEntity(message, HttpStatus.CREATED);
-        }
-        catch (Exception e){
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        }
-    }
     @PostMapping("/add_employee_type")
     public ResponseEntity addEmployeeType(@RequestParam EmployeeType employeeType, @RequestParam int noOfCasualLeave) {
-       // UtilReferenceData.monthlyLeaveAllocationMap.put(employeeType, noOfCasualLeave);
         try {
             String message = utilityDataService.addEmployeeType(employeeType, noOfCasualLeave);
             return new ResponseEntity(message, HttpStatus.CREATED);
@@ -43,7 +33,6 @@ public class UtilityDataController {
 
     @PutMapping("/update_employee_type")
     public ResponseEntity updateEmployeeType(@RequestParam EmployeeType employeeType, @RequestParam int noOfCasualLeave) {
-        // UtilReferenceData.monthlyLeaveAllocationMap.put(employeeType, noOfCasualLeave);
         try {
             String message = utilityDataService.updateEmployeeType(employeeType, noOfCasualLeave);
             return new ResponseEntity(message, HttpStatus.ACCEPTED);
@@ -55,10 +44,20 @@ public class UtilityDataController {
 
     @DeleteMapping("/remove_employee_type")
     public ResponseEntity removeEmployeeType(@RequestParam EmployeeType employeeType) {
-        // UtilReferenceData.monthlyLeaveAllocationMap.remove(employeeType);
         try {
             String message = utilityDataService.removeEmployeeType(employeeType);
             return new ResponseEntity(message, HttpStatus.OK);
+        }
+        catch (Exception e){
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/get_employee_type")
+    public ResponseEntity getEmployeeType() {
+        try {
+            Map<EmployeeType, Integer> map = utilityDataService.getEmployeeType();
+            return new ResponseEntity(map, HttpStatus.OK);
         }
         catch (Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -101,6 +100,17 @@ public class UtilityDataController {
         }
     }
 
+    @GetMapping("/get_national_holidays")
+    public ResponseEntity getNationalHolidays() {
+        try {
+            Map<LocalDate, String> map = utilityDataService.getNationalHolidays();
+            return new ResponseEntity(map, HttpStatus.OK);
+        }
+        catch (Exception e){
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @PostMapping("/add_optional_holiday")
     public ResponseEntity addOptionalHoliday(@RequestParam String event, @RequestParam @DateTimeFormat(pattern = "dd/MM/yyyy") LocalDate date) {
         //UtilReferenceData.optionalHolidays.put(event, date);
@@ -131,6 +141,17 @@ public class UtilityDataController {
         try {
             String message = utilityDataService.removeOptionalHoliday(event);
             return new ResponseEntity(message, HttpStatus.OK);
+        }
+        catch (Exception e){
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/get_optional_holidays")
+    public ResponseEntity getOptionalHolidays() {
+        try {
+            Map<LocalDate, String> map = utilityDataService.getOptionalHolidays();
+            return new ResponseEntity(map, HttpStatus.OK);
         }
         catch (Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);

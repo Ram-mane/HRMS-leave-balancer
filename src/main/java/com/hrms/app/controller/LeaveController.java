@@ -1,25 +1,17 @@
 package com.hrms.app.controller;
 
 
-import com.hrms.app.Enum.Designation;
-import com.hrms.app.Enum.EmployeeType;
-import com.hrms.app.Enum.LeaveType;
-import com.hrms.app.dto.requestDto.EmployeeRequestDto;
+import com.hrms.app.Enum.LeaveStatus;
 import com.hrms.app.dto.requestDto.LeaveRequestDto;
-import com.hrms.app.dto.responseDto.EmployeeResponseDto;
-import com.hrms.app.entity.Leave;
+import com.hrms.app.dto.responseDto.EmployeeLeaveResponseDto;
+import com.hrms.app.dto.responseDto.PageResponseDto;
 import com.hrms.app.dto.responseDto.LeaveResponseDto;
 import com.hrms.app.service.LeaveService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,7 +19,8 @@ import java.util.UUID;
 
 
 @RestController
-@RequestMapping("/Leave")
+@CrossOrigin(origins = { "*" })
+@RequestMapping("/leaves")
 public class LeaveController {
 
     @Autowired
@@ -46,10 +39,10 @@ public class LeaveController {
     }
 
     @GetMapping("/getPendingLeaveRequest")
-    public ResponseEntity getPendingLeaveRequest() {
+    public ResponseEntity getPendingLeaveRequest(@RequestParam int pageNo) {
         try{
-            List<LeaveResponseDto> leaveResponseDtoList =  leaveService.getPendingLeaveRequest();
-            return new ResponseEntity<>(leaveResponseDtoList, HttpStatus.OK);
+            PageResponseDto pageResponseDto =  leaveService.getPendingLeaveRequest(pageNo);
+            return new ResponseEntity<>(pageResponseDto, HttpStatus.OK);
         }
         catch (Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -69,10 +62,10 @@ public class LeaveController {
     }
 
     @GetMapping("/getAllLeaveRequestOfEmployee")
-    public ResponseEntity getAllLeaveRequest(@RequestParam String empEmail) {
+    public ResponseEntity getAllLeaveRequest(@RequestParam String empEmail, @RequestParam int pageNo, @RequestParam LeaveStatus leaveStatus) {
         try{
-            List<LeaveResponseDto> leaveResponseDtoList =  leaveService.getAllLeaveRequest(empEmail);
-            return new ResponseEntity<>(leaveResponseDtoList, HttpStatus.OK);
+            PageResponseDto pageResponseDto =  leaveService.getAllLeaveRequest(empEmail, pageNo, leaveStatus);
+            return new ResponseEntity<>(pageResponseDto, HttpStatus.OK);
         }
         catch (Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -91,10 +84,10 @@ public class LeaveController {
     }
 
     @GetMapping("/getApprovedLeaveRequest")
-    public ResponseEntity getApprovedLeaveRequest() {
+    public ResponseEntity getApprovedLeaveRequest(@RequestParam int pageNo) {
         try{
-            List<LeaveResponseDto> leaveResponseDtoList =  leaveService.getApprovedLeaveRequest();
-            return new ResponseEntity<>(leaveResponseDtoList, HttpStatus.OK);
+            PageResponseDto pageResponseDto =  leaveService.getApprovedLeaveRequest(pageNo);
+            return new ResponseEntity<>(pageResponseDto, HttpStatus.OK);
         }
         catch (Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -109,6 +102,17 @@ public class LeaveController {
         }
         catch (Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/getNoOfLeavesLeft")
+    public ResponseEntity getNoOfLeavesLeft(@RequestParam String empEmail) {
+        try{
+            EmployeeLeaveResponseDto employeeLeaveResponseDto  = leaveService.getNoOfLeavesLeft(empEmail);
+            return new ResponseEntity(employeeLeaveResponseDto, HttpStatus.CREATED);
+        }
+        catch (Exception e) {
+            return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 

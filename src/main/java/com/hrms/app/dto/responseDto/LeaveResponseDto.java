@@ -3,12 +3,10 @@ package com.hrms.app.dto.responseDto;
 
 import com.hrms.app.Enum.LeaveStatus;
 import com.hrms.app.Enum.LeaveType;
-import com.hrms.app.entity.Leave;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -26,7 +24,7 @@ public class LeaveResponseDto {
      String leaveReason;
      LocalDate leaveStartDate;
      LocalDate leaveEndDate;
-     int leaveDuration;
+     double leaveDuration;
      LocalDate appliedDate;
 
 }
