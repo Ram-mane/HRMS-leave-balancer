@@ -1,36 +1,34 @@
 package com.hrms.app.controller;
 
 
-import com.hrms.app.Enum.Designation;
-import com.hrms.app.Enum.EmployeeType;
 import com.hrms.app.Enum.LeaveStatus;
-import com.hrms.app.Enum.LeaveType;
 import com.hrms.app.dto.requestDto.EmployeeRequestDto;
 import com.hrms.app.dto.requestDto.EmployeeUpdateRequestDto;
-import com.hrms.app.dto.requestDto.LeaveRequestDto;
 import com.hrms.app.dto.responseDto.EmployeeResponseDto;
-import com.hrms.app.entity.Employee;
+import com.hrms.app.dto.responseDto.PageResponseDto;
 import com.hrms.app.service.EmpInfoService;
+import com.hrms.app.service.FirebaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 
 @RestController
+@CrossOrigin(origins = { "*" })
 @RequestMapping("/empInfo")
 public class EmpInfoController {
 
     @Autowired
     private EmpInfoService empInfoService;
+
+    @Autowired
+    private FirebaseService firebaseService;
 
     @PostMapping("/addEmp")
     public ResponseEntity addEmployee(@RequestBody EmployeeRequestDto employeeRequestDto) {
@@ -57,11 +55,11 @@ public class EmpInfoController {
     }
 
     @GetMapping("/getAllEmpInfo")
-    public ResponseEntity getAllEmployee() {
+    public ResponseEntity getAllEmployee(@RequestParam int pageNo, @RequestParam String sortBy, @RequestParam String order) {
 
         try{
-            List<EmployeeResponseDto> employeeResponseDtoList = empInfoService.getAllEmployee();
-            return new ResponseEntity<>(employeeResponseDtoList, HttpStatus.OK);
+            PageResponseDto pageResponseDto = empInfoService.getAllEmployee(pageNo, sortBy, order);
+            return new ResponseEntity<>(pageResponseDto, HttpStatus.OK);
         }
         catch (Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -149,15 +147,5 @@ public class EmpInfoController {
         }
     }
 
-    @GetMapping("/getNoOfLeavesLeft")
-    public ResponseEntity getNoOfLeavesLeft(@RequestParam String empEmail) {
-        try{
-            Map<LeaveType, Integer> leavesList  = empInfoService.getNoOfLeavesLeft(empEmail);
-            return new ResponseEntity(leavesList, HttpStatus.CREATED);
-        }
-        catch (Exception e) {
-            return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
-        }
-    }
 
 }

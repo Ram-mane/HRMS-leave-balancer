@@ -4,6 +4,7 @@ import com.hrms.app.dto.requestDto.LeaveRequestDto;
 import com.hrms.app.dto.responseDto.LeaveResponseDto;
 import com.hrms.app.entity.Leave;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -19,13 +20,11 @@ public class LeaveMapper {
                         .leaveReason(leaveRequestDto.getLeaveReason())
                         .leaveStartDate(leaveRequestDto.getLeaveStartDate())
                         .leaveEndDate(leaveRequestDto.getLeaveEndDate())
+                        .leaveDuration(leaveRequestDto.getLeaveDuration())
                         .build();
 
         leave.setLeaveStatus(PENDING);
         leave.setUniqueLeaveId(UUID.randomUUID());
-
-        long days = DAYS.between(leaveRequestDto.getLeaveStartDate(), leaveRequestDto.getLeaveEndDate());
-        leave.setLeaveDuration((int)days + 1);
 
         leave.setCreatedAt(LocalDateTime.now());
         leave.setCreatedBy("Admin");
@@ -37,7 +36,7 @@ public class LeaveMapper {
 
     public static LeaveResponseDto leaveToLeaveResponseDto(Leave leave) {
 
-        return LeaveResponseDto.builder()
+        LeaveResponseDto leaveResponseDto = LeaveResponseDto.builder()
                                 .uniqueLeaveId(leave.getUniqueLeaveId())
                                 .employeeEmail(leave.getEmployee().getEmpEmail())
                                 .leaveType(leave.getLeaveType())
@@ -50,5 +49,9 @@ public class LeaveMapper {
                                 .leaveStatus(leave.getLeaveStatus())
                                 .build();
 
+        if(leaveResponseDto.getAppliedDate() == null)
+            leaveResponseDto.setAppliedDate(LocalDate.now());
+
+        return leaveResponseDto;
     }
 }

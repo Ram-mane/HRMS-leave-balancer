@@ -1,9 +1,13 @@
 package com.hrms.app.service;
 
 
+import com.hrms.app.Enum.LeaveStatus;
 import com.hrms.app.dto.requestDto.LeaveRequestDto;
+import com.hrms.app.dto.responseDto.EmployeeLeaveResponseDto;
+import com.hrms.app.dto.responseDto.PageResponseDto;
 import com.hrms.app.entity.Leave;
 import com.hrms.app.dto.responseDto.LeaveResponseDto;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,15 +18,17 @@ public interface LeaveService {
 
     LeaveResponseDto applyLeave(LeaveRequestDto leaveRequestDto);
 
-    List<LeaveResponseDto> getPendingLeaveRequest();
+    PageResponseDto getPendingLeaveRequest(int pageNo) throws Exception;
 
-    List<LeaveResponseDto> getAllLeaveRequest(String empEmail);
+    PageResponseDto getAllLeaveRequest(String empEmail, int pageNo, LeaveStatus leaveStatus) throws Exception;
 
     LeaveResponseDto getLeaveRequest(UUID uniqueLeaveId);
 
-    List<LeaveResponseDto> getApprovedLeaveRequest();
+    PageResponseDto getApprovedLeaveRequest(int pageNo) throws Exception;
 
     LeaveResponseDto approveLeave(UUID uniqueLeaveId);
 
     LeaveResponseDto rejectLeave(UUID uniqueLeaveId);
+
+    EmployeeLeaveResponseDto getNoOfLeavesLeft(String empEmail);
 }

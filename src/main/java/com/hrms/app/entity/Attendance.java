@@ -35,7 +35,11 @@ public class Attendance {
     LocalDate date;
 
     @CreationTimestamp
-    LocalTime time;
+    LocalTime punchInTime;
+
+    LocalTime punchOutTime;
+
+    double activeTime;
 
     public Attendance(AttendanceStatus attendanceStatus, Employee employee) {
         this.attendanceStatus = attendanceStatus;

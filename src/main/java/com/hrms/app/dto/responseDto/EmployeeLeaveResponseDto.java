@@ -6,24 +6,21 @@ import com.hrms.app.Enum.EmployeeType;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDate;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
-public class EmployeeResponseDto {
-
+public class EmployeeLeaveResponseDto {
     String empName;
     String empEmail;
     String empPhone;
     EmployeeType empType;
     String empDesignation;
     String imgUrl;
-    LocalDate joiningDate;
-    LocalDate dateOfBirth;
-    int empSalary;
-    boolean activeEmployee;
-
+    double casual_leaves_left;
+    int optional_leaves_left;
+    int flexi_leaves_left;
+    int national_leaves_left;
+    int personal_leaves_left;
 }

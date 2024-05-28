@@ -5,8 +5,10 @@ import com.hrms.app.Enum.LeaveStatus;
 import com.hrms.app.Enum.LeaveType;
 import com.hrms.app.dto.requestDto.EmployeeRequestDto;
 import com.hrms.app.dto.requestDto.EmployeeUpdateRequestDto;
+import com.hrms.app.dto.responseDto.EmployeeLeaveResponseDto;
 import com.hrms.app.dto.responseDto.EmployeeResponseDto;
-import com.hrms.app.entity.Employee;
+import com.hrms.app.dto.responseDto.PageResponseDto;
+//import com.hrms.app.entity.Employee;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -16,8 +18,7 @@ import java.util.Map;
 @Service
 public interface EmpInfoService {
 
-    EmployeeResponseDto addEmployee(EmployeeRequestDto employeeRequestDto);
-
+    EmployeeResponseDto addEmployee(EmployeeRequestDto employeeRequestDto) throws Exception;
 
     EmployeeResponseDto getEmployee(String empEmail);
 
@@ -25,7 +26,7 @@ public interface EmpInfoService {
 
     String suspendEmployee(String empEmail);
 
-    List<EmployeeResponseDto> getAllEmployee();
+    PageResponseDto getAllEmployee(int pageNo, String sortBy, String order) throws Exception;
 
     String employeeLogin(String empEmail, String password);
 
@@ -34,8 +35,6 @@ public interface EmpInfoService {
     String approveCompensationWorkDay(String empEmail, LocalDate date);
 
     Map<LocalDate, LeaveStatus> getCompensationWorkDay(String empEmail);
-
-    Map<LeaveType, Integer> getNoOfLeavesLeft(String empEmail);
 
     String rejectCompensationWorkDay(String empEmail, LocalDate date);
 }

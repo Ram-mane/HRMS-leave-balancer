@@ -1,10 +1,10 @@
 package com.hrms.app.service;
 
 import com.hrms.app.Enum.EmployeeType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Map;
 
 @Service
 public interface UtilityDataService {
@@ -28,4 +28,9 @@ public interface UtilityDataService {
 
     String removeOptionalHoliday(String event);
 
+    Map<EmployeeType, Integer> getEmployeeType();
+
+    Map<LocalDate, String> getNationalHolidays();
+
+    Map<LocalDate, String> getOptionalHolidays();
 }

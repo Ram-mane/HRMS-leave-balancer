@@ -1,5 +1,6 @@
 package com.hrms.app.service.impl;
 
+//import com.hrms.app.entity.EmployeeType;
 import com.hrms.app.Enum.EmployeeType;
 import com.hrms.app.entity.UtilityData;
 import com.hrms.app.repository.UtilityDataRepository;
@@ -9,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -39,10 +39,6 @@ public class UtilityDataServiceImpl implements UtilityDataService {
         }
 
         UtilityData utilityData = optionalTables.get();
-
-        if (utilityData == null) {
-            throw new RuntimeException("Utility Table not found");
-        }
 
         return utilityData;
     }
@@ -150,6 +146,27 @@ public class UtilityDataServiceImpl implements UtilityDataService {
 
         return "No event with name : " + event + " found";
 
+    }
+
+    @Override
+    public Map<EmployeeType, Integer> getEmployeeType() {
+        UtilityData utilityData = getUtilityData();
+
+        return utilityData.getMonthlyLeaveAllocationMap();
+    }
+
+    @Override
+    public Map<LocalDate, String> getNationalHolidays() {
+        UtilityData utilityData = getUtilityData();
+
+        return utilityData.getNationalHolidays();
+    }
+
+    @Override
+    public Map<LocalDate, String> getOptionalHolidays() {
+        UtilityData utilityData = getUtilityData();
+
+        return utilityData.getOptionalHolidays();
     }
 
 }
