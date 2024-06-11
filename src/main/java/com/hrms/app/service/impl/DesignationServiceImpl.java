@@ -1,22 +1,25 @@
 package com.hrms.app.service.impl;
 
-import com.hrms.app.dto.responseDto.EmployeeResponseDto;
+import com.hrms.app.dto.responseDto.PageResponseDto;
 import com.hrms.app.entity.Designation;
-import com.hrms.app.entity.Employee;
-import com.hrms.app.mapper.EmployeeMapper;
 import com.hrms.app.repository.DesignationRepository;
 import com.hrms.app.service.DesignationService;
+import com.hrms.app.service.PaginationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class DesignationServiceImpl implements DesignationService {
 
     @Autowired
     DesignationRepository designationRepository;
+
+    @Autowired
+    PaginationService paginationService;
 
     @Override
     public String addDesignation(String designation) {
@@ -43,7 +46,7 @@ public class DesignationServiceImpl implements DesignationService {
     }
 
     @Override
-    public List<EmployeeResponseDto> getAllEmpWithDesignation(String designation) {
+    public PageResponseDto getAllEmpWithDesignation(String designation, int pageNo, UUID organizationCode) throws Exception {
 
         Designation designation1 = designationRepository.findByDesignation(designation);
 
@@ -53,12 +56,7 @@ public class DesignationServiceImpl implements DesignationService {
         if(designation1.getEmployeeList().isEmpty())
             throw new RuntimeException("There is no employee with "+ designation+ " designation.");
 
-//        List<EmployeeResponseDto> list = new ArrayList<>();
-//        for (Employee employee : designation1.getEmployeeList()) {
-//            list.add(EmployeeMapper.employeeToEmployeeResponseDto(employee)); }
-//        return list;
-
-        return designation1.getEmployeeList().stream().map(EmployeeMapper::employeeToEmployeeResponseDto).toList();
+        return paginationService.paginationOnEmployeeList(pageNo, designation1.getEmployeeList());
     }
 
 }

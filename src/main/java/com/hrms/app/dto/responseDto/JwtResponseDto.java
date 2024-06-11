@@ -10,12 +10,10 @@ import lombok.experimental.FieldDefaults;
 @Builder
 public class JwtResponseDto {
 
-    private String message;
-    private boolean success;
-    private  String token;
-    private EmployeeResponseDto userDetails;
-
-
+    String message;
+    Boolean success;
+    String token;
+    String username;
 
     public JwtResponseDto(String message, boolean success) {
         super();
@@ -23,14 +21,11 @@ public class JwtResponseDto {
         this.success = success;
     }
 
-
-
-    public JwtResponseDto(String message, boolean success, String token, EmployeeResponseDto userDetails) {
-        super();
+    public JwtResponseDto(String message, boolean success, String token, String username) {
         this.message = message;
         this.success = success;
         this.token = token;
-        this.userDetails = userDetails;
+        this.username = username;
     }
 
 }

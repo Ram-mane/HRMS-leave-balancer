@@ -1,6 +1,8 @@
 package com.hrms.app.Security;
 
-import com.hrms.app.service.CustomUserDetailsServices;
+//import com.hrms.app.service.CustomUserDetailsServices;
+//import com.hrms.app.service.CustomOrganizationDetailsServices;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import jakarta.servlet.FilterChain;
@@ -8,8 +10,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.authentication.event.AuthenticationFailureCredentialsExpiredEvent;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -20,10 +22,14 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 @Component
+@Configuration
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    @Autowired
-    CustomUserDetailsServices customUserDetailsServices;
+//    @Autowired
+//    CustomUserDetailsServices customUserDetailsServices;
+
+//    @Autowired
+//    CustomOrganizationDetailsServices customOrganizationDetailsServices;
 
     @Autowired
     private UserDetailsService userDetailsService;
@@ -32,7 +38,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     UserDetails userDetails;
 
     @Autowired
-    private JwtTokenHelper jwtTokenHelper;
+    private  JwtTokenHelper jwtTokenHelper;
 
 
     @Override
@@ -56,9 +62,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 //			System.out.println("Decoded Claims: " + jwtTokenHelper.getAllClaimsFromToken(token));
             try {
                 username = this.jwtTokenHelper.getUsernameFromToken(token);
+                System.out.println("username-----"+username);
             }
             catch(IllegalArgumentException e) {
-                System.out.println("Unable to get TOken");
+                System.out.println("Unable to get Token");
 
             }
             catch(ExpiredJwtException e) {
@@ -79,7 +86,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if(username !=null && SecurityContextHolder.getContext().getAuthentication()==null) {
 
-            UserDetails userDetails = this.customUserDetailsServices.loadUserByUsername(username);
+            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+            System.out.println("authorities---------"+userDetails.getAuthorities());
 
             if(this.jwtTokenHelper.validateToken(token, userDetails)) {
 
@@ -89,7 +97,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-
 
             }else {
                 System.out.println("Invalid Token");

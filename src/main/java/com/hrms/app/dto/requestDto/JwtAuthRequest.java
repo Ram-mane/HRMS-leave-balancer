@@ -11,7 +11,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class JwtAuthRequest {
 
-        private String username;
-        private String password;
+        String username;
+        String password;
 
 }

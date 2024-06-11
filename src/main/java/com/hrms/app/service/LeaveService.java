@@ -5,9 +5,7 @@ import com.hrms.app.Enum.LeaveStatus;
 import com.hrms.app.dto.requestDto.LeaveRequestDto;
 import com.hrms.app.dto.responseDto.EmployeeLeaveResponseDto;
 import com.hrms.app.dto.responseDto.PageResponseDto;
-import com.hrms.app.entity.Leave;
 import com.hrms.app.dto.responseDto.LeaveResponseDto;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,17 +16,17 @@ public interface LeaveService {
 
     LeaveResponseDto applyLeave(LeaveRequestDto leaveRequestDto);
 
-    PageResponseDto getPendingLeaveRequest(int pageNo) throws Exception;
+    PageResponseDto getAllLeaveRequest(int pageNo, LeaveStatus leaveStatus, UUID organizationCode) throws Exception;
 
-    PageResponseDto getAllLeaveRequest(String empEmail, int pageNo, LeaveStatus leaveStatus) throws Exception;
+    PageResponseDto getAllLeaveRequestOfEmp(String empEmail, int pageNo, LeaveStatus leaveStatus, UUID organizationCode) throws Exception;
 
     LeaveResponseDto getLeaveRequest(UUID uniqueLeaveId);
 
-    PageResponseDto getApprovedLeaveRequest(int pageNo) throws Exception;
+    LeaveResponseDto approveOrRejectLeave(UUID uniqueLeaveId, LeaveStatus leaveStatus);
 
-    LeaveResponseDto approveLeave(UUID uniqueLeaveId);
+    EmployeeLeaveResponseDto getNoOfLeavesLeft(String empEmail, UUID organizationCode);
 
-    LeaveResponseDto rejectLeave(UUID uniqueLeaveId);
+    LeaveResponseDto updateLeave(LeaveRequestDto leaveRequestDto, UUID uniqueLeaveId);
 
-    EmployeeLeaveResponseDto getNoOfLeavesLeft(String empEmail);
+    String cancelLeaveRequest(String password, UUID uniqueLeaveId);
 }

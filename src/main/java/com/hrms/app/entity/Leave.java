@@ -37,7 +37,7 @@ public class Leave {
     @Enumerated(EnumType.STRING)
     LeaveStatus leaveStatus;
 
-    double leaveDuration;
+    Double leaveDuration;
 
     LocalDate leaveStartDate;
 
@@ -46,16 +46,17 @@ public class Leave {
     @CreationTimestamp
     LocalDate appliedDate;
 
-    @ManyToOne
-    @JoinColumn
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "leaveList")
     Employee employee;
 
     @CreatedDate
     LocalDateTime createdAt;
+    String createdBy;
 
     @LastModifiedDate
     LocalDateTime modifiedAt;
-
-    String createdBy;
     String modifiedBy;
+
+
 }

@@ -4,8 +4,8 @@ package com.hrms.app.controller;
 import com.hrms.app.Enum.LeaveStatus;
 import com.hrms.app.dto.requestDto.EmployeeRequestDto;
 import com.hrms.app.dto.requestDto.EmployeeUpdateRequestDto;
-import com.hrms.app.dto.responseDto.EmployeeResponseDto;
-import com.hrms.app.dto.responseDto.PageResponseDto;
+import com.hrms.app.dto.requestDto.GetAllEmployeesRequestDto;
+import com.hrms.app.dto.responseDto.*;
 import com.hrms.app.service.EmpInfoService;
 import com.hrms.app.service.FirebaseService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 
 @RestController
@@ -31,121 +33,143 @@ public class EmpInfoController {
     private FirebaseService firebaseService;
 
     @PostMapping("/addEmp")
-    public ResponseEntity addEmployee(@RequestBody EmployeeRequestDto employeeRequestDto) {
+    public ResponseEntity addEmployee(@ModelAttribute EmployeeRequestDto employeeRequestDto) {
+//            employeeRequestDto.getEmpImage().getContentType()
 
         try{
             EmployeeResponseDto employeeResponseDto = empInfoService.addEmployee(employeeRequestDto);
-            return new ResponseEntity<>(employeeResponseDto, HttpStatus.OK);
+            ResponseDtoWrapper<EmployeeResponseDto> response = new ResponseDtoWrapper<>(1,
+                    "Success", employeeResponseDto);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+//            return new ResponseEntity<>(ResponseDtoWrapper.builder().statusCode(1).message("Success")
+//                    .result(employeeResponseDto).build(), HttpStatus.OK);
         }
         catch (Exception e){
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            ResponseDtoWrapper<String> response = new ResponseDtoWrapper<>(0, "Failed", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+//            return new ResponseEntity<>(ResponseDtoWrapper.builder().statusCode(0)
+//                    .message("Failed").result(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
     }
 
     @GetMapping("/getEmpInfo")
-    public ResponseEntity getEmployee(@Param("empEmail") String empEmail) {
+    public ResponseEntity getEmployee(@RequestParam String empEmail, @RequestParam UUID organizationCode) {
 
         try{
-            EmployeeResponseDto employeeResponseDto = empInfoService.getEmployee(empEmail);
-            return new ResponseEntity<>(employeeResponseDto, HttpStatus.OK);
+            EmployeeResponseDto employeeResponseDto = empInfoService.getEmployee(empEmail, organizationCode);
+            ResponseDtoWrapper<EmployeeResponseDto> response = new ResponseDtoWrapper<>(1,
+                    "Success", employeeResponseDto);
+            return new ResponseEntity<>(response, HttpStatus.FOUND);
         }
         catch (Exception e){
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            ResponseDtoWrapper<String> response = new ResponseDtoWrapper<>(0, "Failed", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
 
     @GetMapping("/getAllEmpInfo")
-    public ResponseEntity getAllEmployee(@RequestParam int pageNo, @RequestParam String sortBy, @RequestParam String order) {
+    public ResponseEntity getAllEmployee(@RequestBody GetAllEmployeesRequestDto getAllEmployeesRequestDto, @RequestParam UUID organizationCode) {
 
         try{
-            PageResponseDto pageResponseDto = empInfoService.getAllEmployee(pageNo, sortBy, order);
-            return new ResponseEntity<>(pageResponseDto, HttpStatus.OK);
+            PageResponseDto pageResponseDto = empInfoService.getAllEmployee(getAllEmployeesRequestDto, organizationCode);
+            ResponseDtoWrapper<PageResponseDto> response = new ResponseDtoWrapper<>(1,
+                    "Success", pageResponseDto);
+            return new ResponseEntity<>(response, HttpStatus.FOUND);
         }
         catch (Exception e){
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            ResponseDtoWrapper<String> response = new ResponseDtoWrapper<>(0, "Failed", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
 
     @PutMapping("/updateEmployeeData")
-    public ResponseEntity updateEmployee(@RequestParam String empEmail, @RequestBody EmployeeUpdateRequestDto employeeUpdateRequestDto) {
+    public ResponseEntity updateEmployee(@RequestParam String empEmail, @RequestBody EmployeeUpdateRequestDto employeeUpdateRequestDto,
+                                         @RequestParam UUID organizationCode) {
         try {
-            EmployeeResponseDto employeeResponseDto = empInfoService.updateEmployee(empEmail, employeeUpdateRequestDto);
-            return new ResponseEntity<>(employeeResponseDto, HttpStatus.OK);
+            EmployeeResponseDto employeeResponseDto = empInfoService.updateEmployee(empEmail, employeeUpdateRequestDto, organizationCode);
+            ResponseDtoWrapper<EmployeeResponseDto> response = new ResponseDtoWrapper<>(1,
+                    "Success", employeeResponseDto);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         }
         catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            ResponseDtoWrapper<String> response = new ResponseDtoWrapper<>(0, "Failed", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
 
     @PutMapping("/suspendEmployee")
-    public ResponseEntity suspendEmployee(@RequestParam String empEmail) {
+    public ResponseEntity suspendEmployee(@RequestParam String empEmail, @RequestParam UUID organizationCode) {
         try {
-            String message = empInfoService.suspendEmployee(empEmail);
-            return new ResponseEntity<>(message, HttpStatus.OK);
+            String message = empInfoService.suspendEmployee(empEmail, organizationCode);
+            ResponseDtoWrapper<String> response = new ResponseDtoWrapper<>(1,
+                    "Success", message);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         }
         catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            ResponseDtoWrapper<String> response = new ResponseDtoWrapper<>(0, "Failed", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
 
-    @GetMapping("/employeeLogin")
-    public ResponseEntity employeeLogin(@RequestParam String empEmail, @RequestParam String password) {
+    @PutMapping("/changeEmpPassword")
+    public ResponseEntity changeEmpPassword(@RequestParam String empEmail, @RequestParam String newPassword,
+                                            @RequestParam UUID organizationCode) {
+        try {
+            String message = empInfoService.changeEmpPassword(empEmail, newPassword, organizationCode);
+            ResponseDtoWrapper<String> response = new ResponseDtoWrapper<>(1,
+                    "Success", message);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        }
+        catch (Exception e) {
+            ResponseDtoWrapper<String> response = new ResponseDtoWrapper<>(0, "Failed", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/getEmployeeMonthlySalary")
+    public ResponseEntity getEmployeeMonthlySalary(@RequestParam String empEmail, @RequestParam UUID organizationCode) {
 
         try{
-            String message = empInfoService.employeeLogin(empEmail, password);
-            return new ResponseEntity<>(message, HttpStatus.OK);
+            SalaryResponseDto salaryResponseDto = empInfoService.getEmployeeMonthlySalary(empEmail, organizationCode);
+            ResponseDtoWrapper<SalaryResponseDto> response = new ResponseDtoWrapper<>(1,
+                    "Success", salaryResponseDto);
+            return new ResponseEntity<>(response, HttpStatus.FOUND);
         }
         catch (Exception e){
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            ResponseDtoWrapper<String> response = new ResponseDtoWrapper<>(0, "Failed", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
 
-    @PostMapping("/applyForCompensationWork")
-    public ResponseEntity applyForCompensationWorkDay(@RequestParam String empEmail,
-                                                      @DateTimeFormat(pattern = "dd/MM/yyyy") LocalDate date) {
+    @GetMapping("/getEmployeeSalary")
+    public ResponseEntity getEmployeeSalary(@RequestParam String empEmail, @RequestParam LocalDate fromDate,
+                                            @RequestParam LocalDate toDate, @RequestParam UUID organizationCode) {
+
         try{
-            String response = empInfoService.applyForCompensationWorkDay(empEmail, date);
-            return new ResponseEntity(response, HttpStatus.CREATED);
+            SalaryResponseDto salaryResponseDto = empInfoService.getEmployeeSalary(empEmail, fromDate, toDate, organizationCode);
+            ResponseDtoWrapper<SalaryResponseDto> response = new ResponseDtoWrapper<>(1,
+                    "Success", salaryResponseDto);
+            return new ResponseEntity<>(response, HttpStatus.FOUND);
         }
-        catch (Exception e) {
-            return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
+        catch (Exception e){
+            ResponseDtoWrapper<String> response = new ResponseDtoWrapper<>(0, "Failed", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
 
-    @PutMapping("/approveCompensationWorkDay")
-    public ResponseEntity approveCompensationWorkDay(@RequestParam String empEmail,
-                                                     @RequestParam @DateTimeFormat(pattern = "dd/MM/yyyy") LocalDate date) {
+    @GetMapping("/getAllEmployeeSalary")
+    public ResponseEntity getAllEmployeeSalary(@RequestParam UUID organizationCode) {
+
         try{
-            String response = empInfoService.approveCompensationWorkDay(empEmail, date);
-            return new ResponseEntity(response, HttpStatus.CREATED);
+            List<SalaryResponseDto> salaryResponseDtoList = empInfoService.getAllEmployeeSalary(organizationCode);
+            ResponseDtoListWrapper response = new ResponseDtoListWrapper(1,
+                    "Success", salaryResponseDtoList);
+            return new ResponseEntity<>(response, HttpStatus.FOUND);
         }
-        catch (Exception e) {
-            return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    @PutMapping("/rejectCompensationWorkDay")
-    public ResponseEntity rejectCompensationWorkDay(@RequestParam String empEmail,
-                                                     @RequestParam @DateTimeFormat(pattern = "dd/MM/yyyy") LocalDate date) {
-        try{
-            String response = empInfoService.rejectCompensationWorkDay(empEmail, date);
-            return new ResponseEntity(response, HttpStatus.CREATED);
-        }
-        catch (Exception e) {
-            return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
+        catch (Exception e){
+            ResponseDtoWrapper<String> response = new ResponseDtoWrapper<>(0, "Failed", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
-
-    @GetMapping("/getCompensationWorkDay")
-    public ResponseEntity getCompensationWorkDay(@RequestParam String empEmail) {
-        try{
-            Map<LocalDate, LeaveStatus> compensationWorkDayMap  = empInfoService.getCompensationWorkDay(empEmail);
-            return new ResponseEntity(compensationWorkDayMap, HttpStatus.CREATED);
-        }
-        catch (Exception e) {
-            return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
-        }
-    }
-
 
 }

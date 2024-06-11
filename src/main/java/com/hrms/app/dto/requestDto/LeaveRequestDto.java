@@ -17,9 +17,8 @@ public class LeaveRequestDto {
     String employeeEmail;
     LeaveType leaveType;
     String leaveReason;
-    double leaveDuration;
+    Double leaveDuration;//double because duration can be 0.5 (half day) also
     LocalDate leaveStartDate;
     LocalDate leaveEndDate;
-
 
 }

@@ -27,8 +27,8 @@ public class Attendance {
     @Enumerated(EnumType.STRING)
     AttendanceStatus attendanceStatus;
 
-    @ManyToOne
-    @JoinColumn
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "attendanceList")
     Employee employee;
 
     @CreationTimestamp
@@ -39,7 +39,7 @@ public class Attendance {
 
     LocalTime punchOutTime;
 
-    double activeTime;
+    Double activeTime;
 
     public Attendance(AttendanceStatus attendanceStatus, Employee employee) {
         this.attendanceStatus = attendanceStatus;

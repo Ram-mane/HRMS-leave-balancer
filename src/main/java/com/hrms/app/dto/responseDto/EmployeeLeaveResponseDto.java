@@ -18,9 +18,9 @@ public class EmployeeLeaveResponseDto {
     EmployeeType empType;
     String empDesignation;
     String imgUrl;
-    double casual_leaves_left;
-    int optional_leaves_left;
-    int flexi_leaves_left;
-    int national_leaves_left;
-    int personal_leaves_left;
+    Double casual_leaves_left;
+    Integer optional_leaves_left;
+    Integer flexi_leaves_left;
+    Integer national_leaves_left;
+    Integer personal_leaves_left;
 }

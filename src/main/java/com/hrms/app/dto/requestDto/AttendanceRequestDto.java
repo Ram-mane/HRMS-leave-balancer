@@ -11,8 +11,8 @@ import lombok.experimental.FieldDefaults;
 @Builder
 public class AttendanceRequestDto {
 
-    AttendanceStatus attendanceStatus;
-
     String empEmail;
+
+    AttendanceStatus attendanceStatus;
 
 }

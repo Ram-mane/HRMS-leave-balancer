@@ -10,9 +10,13 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.util.List;
 
+@EnableWebMvc
+@Validated
 @EnableScheduling
 @ComponentScan(basePackages = "com.hrms.app")
 @EntityScan(basePackages = {"com.hrms.app.entity"})
@@ -32,17 +36,18 @@ public class HrmsApplication extends SpringBootServletInitializer implements Com
 		try {
 			UserRole role1 = new UserRole();
 			UserRole role2 = new UserRole();
+			UserRole role3 = new UserRole();
 
 			role1.setId(501);
-			role1.setRole("ADMIN_USER");
-
+			role1.setRole("LPT_ADMIN");
 
 			role2.setId(502);
-			role2.setRole("NORMAL_USER");
+			role2.setRole("ORG_ADMIN");
 
+			role3.setId(503);
+			role3.setRole("USER");
 
-
-			List<UserRole> roles = List.of(role1,role2);
+			List<UserRole> roles = List.of(role1,role2, role3);
 
 			List<UserRole> result = this.userRoleRepository.saveAll(roles);
 			result.forEach(r ->{

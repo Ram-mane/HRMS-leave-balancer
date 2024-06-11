@@ -26,7 +26,7 @@ public class GetAttendanceResponseDto {
 
     LocalTime punchOutTime;
 
-    double activeTime;
+    Double activeTime;
 
 }
 

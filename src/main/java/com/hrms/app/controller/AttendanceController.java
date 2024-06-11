@@ -1,15 +1,19 @@
 package com.hrms.app.controller;
 
 import com.hrms.app.dto.requestDto.AttendanceRequestDto;
-import com.hrms.app.dto.responseDto.AddAttendanceResponseDto;
-import com.hrms.app.dto.responseDto.GetAttendanceResponseDto;
+import com.hrms.app.dto.requestDto.ChangeAttendanceRequestDto;
+import com.hrms.app.dto.requestDto.GetAttendanceRequestDto;
+import com.hrms.app.dto.responseDto.*;
 import com.hrms.app.service.AttendanceService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @CrossOrigin(origins = { "*" })
@@ -23,21 +27,41 @@ public class AttendanceController {
     public ResponseEntity markAttendance(@RequestBody AttendanceRequestDto attendanceRequestDto) {
         try{
             AddAttendanceResponseDto addAttendanceResponseDto = attendanceService.markAttendance(attendanceRequestDto);
-            return new ResponseEntity<>(addAttendanceResponseDto, HttpStatus.CREATED);
+            ResponseDtoWrapper<AddAttendanceResponseDto> response = new ResponseDtoWrapper<>(1,
+                    "Success", addAttendanceResponseDto);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
         }
         catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            ResponseDtoWrapper<String> response = new ResponseDtoWrapper<>(0, "Failed", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
 
     @GetMapping("/getAttendanceList")
-    public ResponseEntity getAttendanceList(@RequestParam String empEmail) {
+    public ResponseEntity getAttendanceList(@RequestParam GetAttendanceRequestDto getAttendanceRequestDto, @RequestParam UUID organizationCode) {
         try{
-            List<GetAttendanceResponseDto> getAttendanceResponseDtoList = attendanceService.getAttendanceList(empEmail);
-            return new ResponseEntity<>(getAttendanceResponseDtoList, HttpStatus.CREATED);
+            PageResponseDto pageResponseDto = attendanceService.getAttendanceList(getAttendanceRequestDto, organizationCode);
+            ResponseDtoWrapper<PageResponseDto> response = new ResponseDtoWrapper<>(1,
+                    "Success", pageResponseDto);
+            return new ResponseEntity<>(response, HttpStatus.FOUND);
         }
         catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            ResponseDtoWrapper<String> response = new ResponseDtoWrapper<>(0, "Failed", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/getAttendanceListOfADay/{pageNo}")
+    public ResponseEntity getAttendanceListOfADay(@PathVariable int pageNo, @RequestParam @DateTimeFormat(pattern = "dd/MM/yyyy") LocalDate date, @RequestParam UUID organizationCode) {
+        try{
+            PageResponseDto pageResponseDto = attendanceService.getAttendanceListOfADay(pageNo, date, organizationCode);
+            ResponseDtoWrapper<PageResponseDto> response = new ResponseDtoWrapper<>(1,
+                    "Success", pageResponseDto);
+            return new ResponseEntity<>(response, HttpStatus.FOUND);
+        }
+        catch (Exception e) {
+            ResponseDtoWrapper<String> response = new ResponseDtoWrapper<>(0, "Failed", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -45,21 +69,27 @@ public class AttendanceController {
     public ResponseEntity punchOut(@RequestParam String empEmail) {
         try{
             GetAttendanceResponseDto getAttendanceResponseDto = attendanceService.punchOut(empEmail);
-            return new ResponseEntity<>(getAttendanceResponseDto, HttpStatus.CREATED);
+            ResponseDtoWrapper<GetAttendanceResponseDto> response = new ResponseDtoWrapper<>(1,
+                    "Success", getAttendanceResponseDto);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         }
         catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            ResponseDtoWrapper<String> response = new ResponseDtoWrapper<>(0, "Failed", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
 
-    @GetMapping("/get_attendance_list_last_month")
-    public ResponseEntity getAttendanceListLastMonth(@RequestParam String empEmail) {
+    @PostMapping("/attendanceCorrection")
+    public ResponseEntity attendanceCorrection(@RequestBody ChangeAttendanceRequestDto changeAttendanceRequestDto) {
         try{
-            List<GetAttendanceResponseDto> getAttendanceResponseDtoList = attendanceService.getAttendanceListLastMonth(empEmail);
-            return new ResponseEntity<>(getAttendanceResponseDtoList, HttpStatus.CREATED);
+            GetAttendanceResponseDto getAttendanceResponseDto = attendanceService.attendanceCorrection(changeAttendanceRequestDto);
+            ResponseDtoWrapper<GetAttendanceResponseDto> response = new ResponseDtoWrapper<>(1,
+                    "Success", getAttendanceResponseDto);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
         }
         catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            ResponseDtoWrapper<String> response = new ResponseDtoWrapper<>(0, "Failed", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
     }
 

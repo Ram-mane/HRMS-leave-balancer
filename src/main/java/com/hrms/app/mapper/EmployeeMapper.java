@@ -5,7 +5,10 @@ import com.hrms.app.dto.requestDto.EmployeeUpdateRequestDto;
 import com.hrms.app.dto.responseDto.EmployeeLeaveResponseDto;
 import com.hrms.app.dto.responseDto.EmployeeResponseDto;
 import com.hrms.app.entity.Employee;
+import com.hrms.app.entity.LeavePolicy;
 import com.hrms.app.utilData.Constants;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -14,27 +17,21 @@ import java.util.HashMap;
 
 public class EmployeeMapper {
 
+
     public static Employee employeeRequestDtoToEmployee(EmployeeRequestDto employeeRequestDto) {
 
         return Employee.builder()
                         .empName(employeeRequestDto.getEmpName())
                         .empEmail(employeeRequestDto.getEmpEmail())
                         .dateOfBirth(employeeRequestDto.getDateOfBirth())
-                        .empPassword(employeeRequestDto.getEmpPassword())
                         .empPhone(employeeRequestDto.getEmpPhone())
                         .empType(employeeRequestDto.getEmpType())
                         .empSalary(employeeRequestDto.getEmpSalary())
-                        .imgUrl(employeeRequestDto.getImgUrl())
+                        .salaryRecord(new ArrayList<>())
+//                        .imgUrl(employeeRequestDto.getImgUrl())
                         .joiningDate(employeeRequestDto.getJoiningDate())
-                        .flexiLeavesLeft(Constants.flexiLeave)
-                        .personalLeavesLeft(Constants.personalLeave)
-                        .optionalLeavesLeft(Constants.optionalLeave)
-                        .nationalLeavesLeft(Constants.nationalLeave)
-                        .lastFlexiLeaveTaken(null)
-                        .compensationWorkDayList(new ArrayList<>())
-                        .noOfCompensationWorkDayLeft(0)
-                        .dateList(new ArrayList<>())
-                        .statusList(new ArrayList<>())
+                        .shiftNumber(employeeRequestDto.getShiftNumber()-1)
+                        .compensationRequestList(new ArrayList<>())
                         .activeEmployee(true)
                         .leaveList(new ArrayList<>())
                         .attendanceList(new ArrayList<>())
@@ -58,8 +55,9 @@ public class EmployeeMapper {
                 .imgUrl(employee.getImgUrl())
                 .joiningDate(employee.getJoiningDate())
                 .dateOfBirth(employee.getDateOfBirth())
-                .activeEmployee(employee.isActiveEmployee())
+                .activeEmployee(employee.getActiveEmployee())
                 .empDesignation(employee.getEmpDesignation().getDesignation())
+                .shiftNumber(employee.getShiftNumber())
                 .build();
 
     }
@@ -82,7 +80,7 @@ public class EmployeeMapper {
         if(employeeUpdateRequestDto.getEmpPhone() != null)
             employee.setEmpPhone(employeeUpdateRequestDto.getEmpPhone());
 
-        if(employeeUpdateRequestDto.getEmpSalary() == 0)
+        if(employeeUpdateRequestDto.getEmpSalary() != null)//
             employee.setEmpSalary(employeeUpdateRequestDto.getEmpSalary());
 
         if(employeeUpdateRequestDto.getEmpType() != null)
@@ -90,6 +88,9 @@ public class EmployeeMapper {
 
         if(employeeUpdateRequestDto.getImgUrl() != null)
             employee.setImgUrl(employeeUpdateRequestDto.getImgUrl());
+
+        if(employeeUpdateRequestDto.getShiftNumber() != null)
+            employee.setShiftNumber(employeeUpdateRequestDto.getShiftNumber()-1);
 
         return employee;
     }
@@ -102,10 +103,7 @@ public class EmployeeMapper {
                 .empPhone(employee.getEmpPhone())
                 .empType(employee.getEmpType())
                 .imgUrl(employee.getImgUrl())
-
-                //casual leave += count of compensation work days
-                .casual_leaves_left(employee.getCasualLeavesLeft() + employee.getCompensationWorkDayList().size())
-
+                .casual_leaves_left(employee.getCasualLeavesLeft())
                 .flexi_leaves_left(employee.getFlexiLeavesLeft())
                 .personal_leaves_left(employee.getPersonalLeavesLeft())
                 .optional_leaves_left(employee.getOptionalLeavesLeft())

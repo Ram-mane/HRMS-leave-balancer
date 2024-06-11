@@ -23,7 +23,8 @@ public class EmployeeResponseDto {
     String imgUrl;
     LocalDate joiningDate;
     LocalDate dateOfBirth;
-    int empSalary;
-    boolean activeEmployee;
+    Integer empSalary;
+    Boolean activeEmployee;
+    Integer shiftNumber;
 
 }

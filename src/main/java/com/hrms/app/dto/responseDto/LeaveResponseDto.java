@@ -24,7 +24,7 @@ public class LeaveResponseDto {
      String leaveReason;
      LocalDate leaveStartDate;
      LocalDate leaveEndDate;
-     double leaveDuration;
+     Double leaveDuration;
      LocalDate appliedDate;
 
 }

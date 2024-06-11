@@ -5,5 +5,7 @@ public enum LeaveType {
     PERSONAL,
     FLEXI,
     OPTIONAL,
-    NATIONAL
+    NATIONAL,
+    MISCELLANEOUS_DURATION,
+    MISCELLANEOUS_SINGLE_DAY
 }

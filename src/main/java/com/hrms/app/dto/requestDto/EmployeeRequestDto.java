@@ -6,8 +6,10 @@ import com.hrms.app.Enum.EmployeeType;
 import com.hrms.app.entity.Designation;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -22,9 +24,11 @@ public class EmployeeRequestDto {
     String empPhone;
     EmployeeType empType;
     String empDesignation;
-    String imgUrl;
-    int empSalary;
+    MultipartFile empImage;
+    Integer empSalary;
+    UUID organizationCode;
     LocalDate dateOfBirth;
     LocalDate joiningDate;
+    Integer shiftNumber;
 
 }

@@ -54,4 +54,31 @@ public class LeaveMapper {
 
         return leaveResponseDto;
     }
+
+    public static Leave updateLeaveRequest(LeaveRequestDto leaveRequestDto, Leave leave) {
+
+        if(leaveRequestDto.getLeaveType() != null)
+            leave.setLeaveType(leaveRequestDto.getLeaveType());
+
+        if(leaveRequestDto.getLeaveReason() != null)
+            leave.setLeaveReason(leaveRequestDto.getLeaveReason());
+
+        if(leaveRequestDto.getLeaveDuration() != null)
+            leave.setLeaveDuration(leaveRequestDto.getLeaveDuration());
+
+        if(leaveRequestDto.getLeaveStartDate() != null)
+            leave.setLeaveStartDate(leaveRequestDto.getLeaveStartDate());
+
+        if(leaveRequestDto.getLeaveEndDate() != null)
+            leave.setLeaveEndDate(leaveRequestDto.getLeaveEndDate());
+
+        leave.setLeaveStatus(PENDING);
+
+        leave.setAppliedDate(LocalDate.now());
+
+        leave.setModifiedAt(LocalDateTime.now());
+
+        return leave;
+
+    }
 }

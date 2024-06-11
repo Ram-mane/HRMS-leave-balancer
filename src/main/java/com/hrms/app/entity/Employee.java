@@ -7,6 +7,7 @@ import com.hrms.app.Enum.LeaveStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -21,6 +22,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
+@Primary
 @EntityListeners(AuditingEntityListener.class)
 @Entity
 @Data
@@ -31,75 +33,79 @@ import java.util.stream.Collectors;
 @Builder
 public class Employee implements UserDetails {
 
+    //Personal Data
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     UUID empId;
-
     String username;
-
     String empName;
-
     @Column(unique = true)
     String empEmail;
-
     String empPassword;
-
     @Column(unique = true)
     String empPhone;
-
     @Enumerated(EnumType.STRING)
     EmployeeType empType;
+    String imgUrl;
+    Integer empSalary;
+    LocalDate dateOfBirth;
+    LocalDate joiningDate;
+    Boolean activeEmployee;
 
-    @ManyToOne
-    @JoinColumn
+    List<Integer> salaryRecord;
+
+    //Employee Designation
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "employeeList")
     Designation empDesignation;
 
-    String imgUrl;
 
-    int empSalary;
+    //Organization Related Data
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "employeeListOfOrg")
+    Organization organization;
 
-    LocalDate dateOfBirth;
 
-    LocalDate joiningDate;
+    //Policy related Data
+    Integer shiftNumber;
 
+
+    //Leave Related Data
     LocalDate lastFlexiLeaveTaken;
-
-    boolean activeEmployee;
-
-    double casualLeavesLeft;
-    int optionalLeavesLeft;
-    int flexiLeavesLeft;
-    int nationalLeavesLeft;
-    int personalLeavesLeft;
-
-    int noOfCompensationWorkDayLeft;
-
-    List<LocalDate> compensationWorkDayList;
-    List<LocalDate> dateList;
-    List<LeaveStatus> statusList;
-
-    int leaveCredited;
+    Double casualLeavesLeft;
+    Integer optionalLeavesLeft;
+    Integer flexiLeavesLeft;
+    Integer nationalLeavesLeft;
+    Integer personalLeavesLeft;
+    Integer leaveCredited;
 
     @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL)
     List<Leave> leaveList;
 
+
+    //Compensation Related Data
+    @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL)
+    List<CompensationWorkRequest> compensationRequestList;
+
+
+    //Attendance Related Data
     @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL)
     List<Attendance> attendanceList;
 
-    boolean attendanceMarked;
+    Boolean attendanceMarked;
 
-    //@OneToOne(mappedBy = "employee", cascade = CascadeType.ALL)
-    //User user;
 
+    //Created & Modified data
     @CreatedDate
     LocalDateTime createdAt;
+    String createdBy;
 
     @LastModifiedDate
     LocalDateTime modifiedAt;
-
-    String createdBy;
     String modifiedBy;
 
+
+    //Role-Authority Related Data
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<SimpleGrantedAuthority> authority=this.roles.stream().map(role -> new SimpleGrantedAuthority(role.getRole())).collect(Collectors.toList());
@@ -111,7 +117,7 @@ public class Employee implements UserDetails {
     @JoinTable(name="user_role_relation",
             joinColumns = @JoinColumn(name = "user(id)", referencedColumnName = "empId"),
             inverseJoinColumns = @JoinColumn(name="role(id)", referencedColumnName = "id"))
-    private Set<UserRole> roles = new HashSet<>();
+    Set<UserRole> roles = new HashSet<>();
 
     @Override
     public String getPassword() {
@@ -148,6 +154,10 @@ public class Employee implements UserDetails {
     private void setEmailAsUsernameAndBCryptPass() {
         this.username = this.empEmail;
 //	        this.password = this.passwordEncoder(this.password);// Set username as email
+    }
+
+    public UUID getOrganizationCode() {
+        return organization.getOrganizationCode();
     }
 
 }

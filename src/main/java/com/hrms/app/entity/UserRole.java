@@ -16,7 +16,8 @@ import lombok.experimental.FieldDefaults;
 public class UserRole {
 
     @Id
-    int id;
+    Integer id;
 
     String role;
+
 }

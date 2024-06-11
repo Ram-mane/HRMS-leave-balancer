@@ -1,35 +1,29 @@
 package com.hrms.app.service.impl;
 
-import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.DocumentSnapshot;
+import com.hrms.app.Enum.EmployeeType;
 import com.hrms.app.Enum.LeaveStatus;
 import com.hrms.app.Enum.LeaveType;
-import com.hrms.app.config.FirebaseInitialization;
 import com.hrms.app.dto.requestDto.LeaveRequestDto;
 import com.hrms.app.dto.responseDto.EmployeeLeaveResponseDto;
 import com.hrms.app.dto.responseDto.PageResponseDto;
 import com.hrms.app.entity.Employee;
 import com.hrms.app.entity.Leave;
 import com.hrms.app.dto.responseDto.LeaveResponseDto;
+import com.hrms.app.entity.LeavePolicy;
 import com.hrms.app.mapper.EmployeeMapper;
 import com.hrms.app.mapper.LeaveMapper;
 import com.hrms.app.repository.EmpInfoRepository;
 import com.hrms.app.repository.LeaveRepository;
-import com.hrms.app.service.FirebaseService;
 import com.hrms.app.service.LeaveService;
+import com.hrms.app.service.PaginationService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.MonthDay;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static java.time.temporal.ChronoUnit.DAYS;
 
@@ -44,10 +38,10 @@ public class LeaveServiceImpl implements LeaveService {
     private EmpInfoRepository empInfoRepository;
 
     @Autowired
-    private UtilityDataServiceImpl utilityDataService;
+    PasswordEncoder passwordEncoder;
 
     @Autowired
-    private FirebaseService firebaseService;
+    private PaginationService paginationService;
 
     @Override
     public LeaveResponseDto applyLeave(LeaveRequestDto leaveRequestDto) {
@@ -55,133 +49,68 @@ public class LeaveServiceImpl implements LeaveService {
         if(leaveRequestDto == null)
             throw new RuntimeException("Invalid Leave Request");
 
-        if(!leaveRequestDto.getLeaveStartDate().isAfter(LocalDate.now()) || leaveRequestDto.getLeaveEndDate().isBefore(leaveRequestDto.getLeaveStartDate()))
-            throw new RuntimeException("Enter valid leave duration dates");
-
         Employee employee = empInfoRepository.findByEmpEmail(leaveRequestDto.getEmployeeEmail());
 
         if(employee == null)
             throw new RuntimeException("Invalid Employee Email");
 
-
         Leave leave = LeaveMapper.leaveRequestDtoToLeave(leaveRequestDto);
-
-        long days = DAYS.between(leaveRequestDto.getLeaveStartDate(), leaveRequestDto.getLeaveEndDate()) + 1;
-        long leave_duration = (long)leave.getLeaveDuration();
-        if(leave.getLeaveDuration() >= (double)1.0 && days != leave_duration) {
-            throw new RuntimeException("Duration and Leave Dates didn't match");
-        }
 
         leave.setEmployee(employee);
 
-        employee.getLeaveList().add(leave);
-
         checkLeaveValidity(leave);
 
-        empInfoRepository.save(employee);
+        employee.getLeaveList().add(leave);
 
-       // Optional<Leave> opLeave1 = leaveRepository.findByEmployeeEmailAndDate(employee.getEmpEmail(), LocalDate.now());
+        empInfoRepository.save(employee);
 
         return LeaveMapper.leaveToLeaveResponseDto(leave);
     }
 
     @Override
-    public PageResponseDto getPendingLeaveRequest(int pageNo) throws Exception{
+    public PageResponseDto getAllLeaveRequest(int pageNo, LeaveStatus leaveStatus, UUID organizationCode) throws Exception{
 
-        int pageSize = firebaseService.getPageSizeLeave();
+        List<Leave> leaveList = leaveRepository.findLeavesByOrganizationCodeAndStatus(organizationCode, leaveStatus);
 
-        Pageable pageable = PageRequest.of(pageNo-1, pageSize);
+        if(leaveList.isEmpty())
+            throw new RuntimeException("There are no leaves request right now");
 
-        Page<Leave> page = leaveRepository.getPendingLeaveRequest(pageable);
+        return paginationService.paginationOnLeaveList(pageNo, leaveList);
 
-//        if(leaveList.isEmpty())
-//            throw new RuntimeException("There are no pending leaves right now");
-
-        List<LeaveResponseDto> leaveResponseDtoList = new ArrayList<>();
-        for(Leave leave : page) {
-            leaveResponseDtoList.add(LeaveMapper.leaveToLeaveResponseDto(leave));
-        }
-
-       return new PageResponseDto(leaveResponseDtoList, page.getNumber()+1, page.getSize(),
-                                page.getTotalPages(), page.getTotalElements(), page.isLast());
     }
 
     @Override
-    public PageResponseDto getApprovedLeaveRequest(int pageNo) throws Exception{
-
-        int pageSize = firebaseService.getPageSizeLeave();
-
-        Pageable pageable = PageRequest.of(pageNo-1, pageSize);
-
-        Page<Leave> page = leaveRepository.getApprovedLeaveRequest(pageable);
-
-//        if(page.isEmpty())
-//            throw new RuntimeException("There are no approved leaves right now");
-
-        List<LeaveResponseDto> leaveResponseDtoList = new ArrayList<>();
-        for(Leave leave : page) {
-            leaveResponseDtoList.add(LeaveMapper.leaveToLeaveResponseDto(leave));
-        }
-
-        return new PageResponseDto(leaveResponseDtoList, page.getNumber()+1, page.getSize(),
-                                    page.getTotalPages(), page.getTotalElements(), page.isLast());
-    }
-
-    @Override
-    public PageResponseDto getAllLeaveRequest(String empEmail, int pageNo, LeaveStatus leaveStatus) throws Exception{
-
-        int pageSize = firebaseService.getPageSizeLeave();
+    public PageResponseDto getAllLeaveRequestOfEmp(String empEmail, int pageNo, LeaveStatus leaveStatus, UUID organizationCode) throws Exception{
 
         Employee employee = empInfoRepository.findByEmpEmail(empEmail);
 
         if(employee == null)
             throw new RuntimeException("Invalid Employee email id");
 
-        List<Leave> leaveList = employee.getLeaveList();
+        if(!employee.getOrganizationCode().equals(organizationCode))
+            throw new RuntimeException("Organization code did not matched with employees organization");
+
+        List<Leave> leaveList = leaveRepository.findLeavesByEmployeeEmailAndStatus(empEmail, leaveStatus);
 
         if(leaveList.isEmpty())
             throw new RuntimeException("There are no leaves request right now");
 
-        if(leaveStatus != null) {
-            leaveList = leaveList.stream()
-                    .filter(leave -> leave.getLeaveStatus() == leaveStatus)
-                    .collect(Collectors.toList());
-        }
-
-        int totalPages = (int) Math.ceil((double) leaveList.size() / pageSize);
-
-        // Check if requested page number exceeds total pages
-        if (pageNo > totalPages) {
-            // Return an empty page or handle as appropriate for your application
-            return new PageResponseDto(new ArrayList<>(), pageNo, pageSize, totalPages, leaveList.size(), true);
-        }
-
-        int start = (pageNo-1)*pageSize;
-        int end = Math.min(start+pageSize, leaveList.size());
-        Pageable pageable = PageRequest.of(pageNo-1, pageSize);
-        Page<Leave> page = new PageImpl<>(leaveList.subList(start, end), pageable, leaveList.size());
-
-        List<LeaveResponseDto> leaveResponseDtoList = new ArrayList<>();
-        for(Leave leave : page) {
-            leaveResponseDtoList.add(LeaveMapper.leaveToLeaveResponseDto(leave));
-        }
-
-        return new PageResponseDto(leaveResponseDtoList, page.getNumber()+1, page.getSize(), page.getTotalPages(),
-                                    page.getTotalElements(), page.isLast());
+        return paginationService.paginationOnLeaveList(pageNo, leaveList);
     }
 
 
     @Override
-    public LeaveResponseDto approveLeave(UUID uniqueLeaveId) {
+    public LeaveResponseDto approveOrRejectLeave(UUID uniqueLeaveId, LeaveStatus leaveStatus) {
 
         Leave appliedLeave = leaveRepository.findByUniqueLeaveId(uniqueLeaveId);
 
         if(appliedLeave == null)
             throw new RuntimeException("Incorrect leave Id");
 
-        checkLeaveValidity(appliedLeave);
+        if (leaveStatus.equals(LeaveStatus.APPROVED))
+            approvingLeaveRequest(appliedLeave);
 
-        appliedLeave.setLeaveStatus(LeaveStatus.APPROVED);
+        appliedLeave.setLeaveStatus(leaveStatus);
 
         leaveRepository.save(appliedLeave);
 
@@ -191,6 +120,7 @@ public class LeaveServiceImpl implements LeaveService {
 
     @Override
     public LeaveResponseDto getLeaveRequest(UUID uniqueLeaveId) {
+
         Leave appliedLeave = leaveRepository.findByUniqueLeaveId(uniqueLeaveId);
 
         if(appliedLeave == null)
@@ -201,32 +131,150 @@ public class LeaveServiceImpl implements LeaveService {
     }
 
     @Override
-    public LeaveResponseDto rejectLeave(UUID uniqueLeaveId) {
+    public EmployeeLeaveResponseDto getNoOfLeavesLeft(String empEmail, UUID organizationCode) {
 
-        Leave appliedLeave = leaveRepository.findByUniqueLeaveId(uniqueLeaveId);
-
-        if(appliedLeave == null)
-            throw new RuntimeException("Incorrect leave Id");
-
-        appliedLeave.setLeaveStatus(LeaveStatus.REJECTED);
-
-        leaveRepository.save(appliedLeave);
-
-        return LeaveMapper.leaveToLeaveResponseDto(appliedLeave);
-
-    }
-
-    @Override
-    public EmployeeLeaveResponseDto getNoOfLeavesLeft(String empEmail) {
         Employee employee = empInfoRepository.findByEmpEmail(empEmail);
 
         if (employee == null)
             throw new RuntimeException("Invalid Employee email id");
 
+        if(!employee.getOrganizationCode().equals(organizationCode))
+            throw new RuntimeException("Organization code did not matched with employees organization");
+
         return EmployeeMapper.employeeToEmployeeLeaveResponseDto(employee);
     }
 
+    @Override
+    public LeaveResponseDto updateLeave(LeaveRequestDto leaveRequestDto, UUID uniqueLeaveId) {
+
+        if(leaveRequestDto == null)
+            throw new RuntimeException("Invalid Leave Request");
+
+        Leave prevLeave = leaveRepository.findByUniqueLeaveId(uniqueLeaveId);
+
+        if(prevLeave == null)
+            throw new RuntimeException("Incorrect leave Id");
+
+        if(prevLeave.getLeaveStatus().equals(LeaveStatus.APPROVED) && prevLeave.getLeaveStartDate().isAfter(LocalDate.now()))
+            throw new RuntimeException("Leave updation period has now ended");
+
+        Employee employee = empInfoRepository.findByEmpEmail(leaveRequestDto.getEmployeeEmail());
+
+        if(employee == null)
+            throw new RuntimeException("Invalid Employee Email");
+
+        if (prevLeave.getLeaveStatus().equals(LeaveStatus.APPROVED))
+            resetLeavesLeftToBeforeApprovedState(prevLeave);
+
+        Leave leave = LeaveMapper.updateLeaveRequest(leaveRequestDto, prevLeave);
+
+        checkLeaveValidity(leave);
+
+        empInfoRepository.save(employee);
+
+        return LeaveMapper.leaveToLeaveResponseDto(leave);
+    }
+
+    @Override
+    public String cancelLeaveRequest(String password, UUID uniqueLeaveId) {
+
+        Leave leave = leaveRepository.findByUniqueLeaveId(uniqueLeaveId);
+
+        if(leave == null)
+            throw new RuntimeException("Incorrect leave Id");
+
+        if(leave.getLeaveStatus().equals(LeaveStatus.APPROVED) && leave.getLeaveStartDate().isAfter(LocalDate.now()))
+            throw new RuntimeException("Duration to delete leave request has now ended");
+
+        Employee employee = leave.getEmployee();
+
+        if(!passwordEncoder.encode(password).equals(employee.getPassword()))
+            throw new RuntimeException("Invalid Employee Password");
+
+        if (leave.getLeaveStatus().equals(LeaveStatus.APPROVED))
+            resetLeavesLeftToBeforeApprovedState(leave);
+
+        employee.getLeaveList().remove(leave);
+
+        empInfoRepository.save(employee);
+
+        return "Your leave request with leave Id "+ leave.getUniqueLeaveId() +" has been removed successfully";
+    }
+
     public void checkLeaveValidity(Leave appliedLeave) {
+
+        if(!appliedLeave.getLeaveStartDate().isAfter(LocalDate.now()) ||
+                appliedLeave.getLeaveEndDate().isBefore(appliedLeave.getLeaveStartDate()))
+            throw new RuntimeException("Enter valid leave duration dates");
+
+        Employee employee = appliedLeave.getEmployee();
+
+        LeavePolicy leavePolicy = employee.getOrganization().getLeavePolicy();
+        if(leavePolicy == null)
+            throw new RuntimeException("Leave Policy for your organization is not found");
+
+        LeaveType leaveType = appliedLeave.getLeaveType();
+
+        double duration = appliedLeave.getLeaveDuration();
+
+        LocalDate leaveDate = appliedLeave.getLeaveStartDate();
+
+        long days = DAYS.between(leaveDate, appliedLeave.getLeaveEndDate()) + 1;
+        long leave_duration = appliedLeave.getLeaveDuration().longValue();
+
+        if(appliedLeave.getLeaveDuration() >= (double)1.0 && days != leave_duration) {
+            throw new RuntimeException("Duration and Leave Dates didn't match");
+        }
+
+        if (duration > 1 && !(leaveType.equals(LeaveType.CASUAL) || leaveType.equals(LeaveType.MISCELLANEOUS_DURATION))) {
+            throw new RuntimeException("Duration must be 1 day for " + leaveType + "leaves");
+        }
+
+        if(leavePolicy.getPersonalLeaveAllowed() && leaveType.equals(LeaveType.PERSONAL)) {
+            if(!leaveDate.isEqual(employee.getDateOfBirth()) && !leaveDate.isEqual(employee.getJoiningDate()))
+                throw new RuntimeException("Personal leaves are only for birthday and work Anniversary");
+        }
+
+        else if(leavePolicy.getFlexiLeaveAllowed() && leaveType.equals(LeaveType.FLEXI)) {
+            LocalDate firstAllowDate = LocalDate.now();
+            if(employee.getLastFlexiLeaveTaken() != null)
+                firstAllowDate = employee.getLastFlexiLeaveTaken().
+                        plusMonths(leavePolicy.getNoOfMonthsBetweenTwoFlexiLeave());
+
+            if(leaveDate.isBefore(firstAllowDate))
+                throw new RuntimeException("You have exhausted your Flexi leave for now, Please apply on/after " + firstAllowDate);
+        }
+
+        else if(leavePolicy.getOptionalLeaveAllowed() && leaveType.equals(LeaveType.OPTIONAL)) {
+            if (employee.getOptionalLeavesLeft() == 0)
+                throw new RuntimeException("You have already taken maximum allowed Optional holidays");
+
+           // List<MonthDay> optionalLeaves = employee.getOrganization().getLeavePolicy().getOptionalLeaves();
+
+            int month = leaveDate.getMonthValue();
+            int day = leaveDate.getDayOfMonth();
+
+//            if (!optionalLeaves.contains(MonthDay.of(month, day)))
+//                throw new RuntimeException("Optional holiday cannot be granted on " + leaveDate);
+        }
+
+        else if(leaveType.equals(LeaveType.NATIONAL)) {
+         //   List<MonthDay> nationalLeaves = employee.getOrganization().getLeavePolicy().getNationalLeaves();
+
+            int month = leaveDate.getMonthValue();
+            int day = leaveDate.getDayOfMonth();
+//
+//            if (!nationalLeaves.contains(MonthDay.of(month, day)))
+//                throw new RuntimeException("National holiday cannot be granted on " + leaveDate);
+        }
+
+        else if(leaveType.equals(LeaveType.MISCELLANEOUS_SINGLE_DAY)) {
+            if(!leavePolicy.getSpecificDateList().contains(leaveDate))
+                throw new RuntimeException("Invalid date");
+        }
+    }
+
+    public void approvingLeaveRequest(Leave appliedLeave) {
 
         if(appliedLeave.getLeaveStartDate().isBefore(LocalDate.now()))
             throw new RuntimeException("Request has became invalid now");
@@ -239,53 +287,69 @@ public class LeaveServiceImpl implements LeaveService {
 
         LocalDate leaveDate = appliedLeave.getLeaveStartDate();
 
-        if (duration > 1 && leaveType.compareTo(LeaveType.CASUAL) != 0) {
-            throw new RuntimeException("Duration must be 1 day for " + leaveType + "leaves");
-        }
-
         if(leaveType.equals(LeaveType.CASUAL)) {
             employee.setCasualLeavesLeft(employee.getCasualLeavesLeft() - duration);
         }
 
-        else if(leaveType.equals(LeaveType.PERSONAL)) {
-            if(leaveDate.isEqual(employee.getDateOfBirth()) || leaveDate.equals(employee.getJoiningDate())) {
-                employee.setPersonalLeavesLeft(employee.getPersonalLeavesLeft()-1);
-            }
-            else throw new RuntimeException("Personal leaves are only for birthday and work Anniversary");
-        }
+        else if(leaveType.equals(LeaveType.PERSONAL))
+            employee.setPersonalLeavesLeft(employee.getPersonalLeavesLeft()-1);
+
 
         else if(leaveType.equals(LeaveType.FLEXI)) {
-            LocalDate firstAllowDate = LocalDate.now();
-            if(employee.getLastFlexiLeaveTaken() != null)
-                firstAllowDate = employee.getLastFlexiLeaveTaken().plusMonths(4);
-
-            if(employee.getLastFlexiLeaveTaken() == null || leaveDate.isAfter(firstAllowDate) || leaveDate.isEqual(firstAllowDate)) {
-                employee.setLastFlexiLeaveTaken(leaveDate);
-                employee.setFlexiLeavesLeft(employee.getFlexiLeavesLeft()-1);
-            }
-            else throw new RuntimeException("Only 1 Flexi leave is allowed under 4 months apply on/after " + firstAllowDate);
+           employee.setLastFlexiLeaveTaken(leaveDate);
+           employee.setFlexiLeavesLeft(employee.getFlexiLeavesLeft()-1);
         }
 
-        else if(leaveType.equals(LeaveType.OPTIONAL)) {
-            if (employee.getOptionalLeavesLeft() == 0)
-                throw new RuntimeException("You have already taken maximum allowed Optional holidays");
+        else if(leaveType.equals(LeaveType.OPTIONAL))
+            employee.setOptionalLeavesLeft(employee.getOptionalLeavesLeft()-1);
 
-            Map<LocalDate, String> optionalLeaveMap = utilityDataService.getUtilityData().getOptionalHolidays();
+        else if(leaveType.equals(LeaveType.NATIONAL))
+            employee.setNationalLeavesLeft(employee.getNationalLeavesLeft()-1);
+    }
 
-            if (optionalLeaveMap.containsKey(leaveDate)) {
-                employee.setOptionalLeavesLeft(employee.getOptionalLeavesLeft()-1);
-            }
-            else throw new RuntimeException("Optional holiday cannot be granted on " + leaveDate);
+    private void resetLeavesLeftToBeforeApprovedState(Leave prevLeave) {
+
+        Employee employee = prevLeave.getEmployee();
+
+        LeaveType leaveType = prevLeave.getLeaveType();
+
+        if(leaveType.equals(LeaveType.CASUAL)) {
+            employee.setCasualLeavesLeft(employee.getCasualLeavesLeft() + prevLeave.getLeaveDuration());
         }
 
-        else if(leaveType.equals(LeaveType.NATIONAL)) {
-            Map<LocalDate, String> nationalLeaveMap = utilityDataService.getUtilityData().getNationalHolidays();
-            if (nationalLeaveMap.containsKey(leaveDate)) {
-                employee.setNationalLeavesLeft(employee.getNationalLeavesLeft()-1);
-            }
-            else throw new RuntimeException("National holiday cannot be granted on " + leaveDate);
+        else if(leaveType.equals(LeaveType.PERSONAL))
+            employee.setPersonalLeavesLeft(employee.getPersonalLeavesLeft()+1);
+
+
+        else if(leaveType.equals(LeaveType.FLEXI)) {
+            employee.setLastFlexiLeaveTaken(null);
+            employee.setFlexiLeavesLeft(employee.getFlexiLeavesLeft()+1);
         }
 
-        else throw new RuntimeException("Invalid Leave type");
+        else if(leaveType.equals(LeaveType.OPTIONAL))
+            employee.setOptionalLeavesLeft(employee.getOptionalLeavesLeft()+1);
+
+        else
+            employee.setNationalLeavesLeft(employee.getNationalLeavesLeft()+1);
+
+    }
+
+    public int noOfLeavesTaken(String empEmail, LocalDate fromDate, LocalDate toDate) {
+
+        List<Leave> leavesTakenList = leaveRepository.noOfLeavesTakenBetween(empEmail, fromDate, toDate, LeaveStatus.APPROVED);
+
+        int leavesTaken = 0;
+        for(Leave leave : leavesTakenList) {
+            if(leave.getLeaveType().compareTo(LeaveType.CASUAL) == 0 || leave.getLeaveType().compareTo(LeaveType.MISCELLANEOUS_DURATION) == 0 ) {
+                if(leave.getLeaveEndDate().isAfter(toDate))
+                    leavesTaken += Duration.between(leave.getLeaveStartDate(), toDate).toDays()+1;
+                else
+                    leavesTaken += leave.getLeaveDuration()+1;
+            }
+            else
+                leavesTaken += 1;
+        }
+
+        return leavesTaken;
     }
 }

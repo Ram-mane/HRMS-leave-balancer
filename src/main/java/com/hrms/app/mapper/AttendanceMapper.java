@@ -2,6 +2,7 @@ package com.hrms.app.mapper;
 
 import com.hrms.app.Enum.AttendanceStatus;
 import com.hrms.app.dto.requestDto.AttendanceRequestDto;
+import com.hrms.app.dto.requestDto.ChangeAttendanceRequestDto;
 import com.hrms.app.dto.responseDto.AddAttendanceResponseDto;
 import com.hrms.app.dto.responseDto.GetAttendanceResponseDto;
 import com.hrms.app.entity.Attendance;
@@ -21,7 +22,7 @@ public class AttendanceMapper {
                                                     .empEmail(attendance.getEmployee().getEmpEmail())
                                                     .build();
 
-        if(attendance.getAttendanceStatus().equals(AttendanceStatus.PRESENT))
+        if(attendance.getAttendanceStatus().equals(AttendanceStatus.ATTENDING))
             addAttendanceResponseDto.setMessage("Welcome " + attendance.getEmployee().getEmpName());
         else {
             addAttendanceResponseDto.setMessage(attendance.getEmployee().getEmpName()+", you are marked" +
@@ -32,19 +33,35 @@ public class AttendanceMapper {
     }
 
     public static GetAttendanceResponseDto AttendanceToGetAttendanceResponseDto(Attendance attendance) {
-        GetAttendanceResponseDto getAttendanceResponseDto = GetAttendanceResponseDto.builder()
-                                                            .attendanceStatus(attendance.getAttendanceStatus())
-                                                            .empName(attendance.getEmployee().getEmpName())
-                                                            .empEmail(attendance.getEmployee().getEmpEmail())
-                                                            .punchInTime(attendance.getPunchInTime())
-                                                            .activeTime(attendance.getActiveTime())
-                                                            .date(attendance.getDate())
-                                                            .build();
+        return GetAttendanceResponseDto.builder()
+                                        .attendanceStatus(attendance.getAttendanceStatus())
+                                        .empName(attendance.getEmployee().getEmpName())
+                                        .empEmail(attendance.getEmployee().getEmpEmail())
+                                        .punchInTime(attendance.getPunchInTime())
+                                        .punchOutTime(attendance.getPunchOutTime())
+                                        .activeTime(attendance.getActiveTime())
+                                        .date(attendance.getDate())
+                                        .build();
 
-        if(attendance.getPunchOutTime() != null) {
-            getAttendanceResponseDto.setPunchOutTime(attendance.getPunchOutTime());
-        }
+    }
 
-        return getAttendanceResponseDto;
+    public static Attendance ChangeAttentionRequestDtoToAttention(ChangeAttendanceRequestDto changeAttendanceRequestDto) {
+        return Attendance.builder().attendanceStatus(changeAttendanceRequestDto.getAttendanceStatus())
+                .date(changeAttendanceRequestDto.getDate())
+                .punchInTime(changeAttendanceRequestDto.getPunchInTime())
+                .punchOutTime(changeAttendanceRequestDto.getPunchOutTime())
+                .activeTime(changeAttendanceRequestDto.getActiveTime())
+                .build();
+    }
+
+    public static Attendance ChangeAttentionField(ChangeAttendanceRequestDto requestDto, Attendance attendance) {
+
+        attendance.setAttendanceStatus(requestDto.getAttendanceStatus());
+        attendance.setDate(requestDto.getDate());
+        attendance.setPunchOutTime(requestDto.getPunchInTime());
+        attendance.setPunchOutTime(requestDto.getPunchOutTime());
+        attendance.setActiveTime(requestDto.getActiveTime());
+
+        return attendance;
     }
 }

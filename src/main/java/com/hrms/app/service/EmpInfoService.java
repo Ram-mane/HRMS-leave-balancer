@@ -5,36 +5,38 @@ import com.hrms.app.Enum.LeaveStatus;
 import com.hrms.app.Enum.LeaveType;
 import com.hrms.app.dto.requestDto.EmployeeRequestDto;
 import com.hrms.app.dto.requestDto.EmployeeUpdateRequestDto;
+import com.hrms.app.dto.requestDto.GetAllEmployeesRequestDto;
 import com.hrms.app.dto.responseDto.EmployeeLeaveResponseDto;
 import com.hrms.app.dto.responseDto.EmployeeResponseDto;
 import com.hrms.app.dto.responseDto.PageResponseDto;
 //import com.hrms.app.entity.Employee;
+import com.hrms.app.dto.responseDto.SalaryResponseDto;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public interface EmpInfoService {
 
     EmployeeResponseDto addEmployee(EmployeeRequestDto employeeRequestDto) throws Exception;
 
-    EmployeeResponseDto getEmployee(String empEmail);
+    EmployeeResponseDto getEmployee(String empEmail, UUID organizationCode);
 
-    EmployeeResponseDto updateEmployee(String empEmail, EmployeeUpdateRequestDto employeeUpdateRequestDto);
+    EmployeeResponseDto updateEmployee(String empEmail, EmployeeUpdateRequestDto employeeUpdateRequestDto, UUID organizationCode);
 
-    String suspendEmployee(String empEmail);
+    String suspendEmployee(String empEmail, UUID organizationCode);
 
-    PageResponseDto getAllEmployee(int pageNo, String sortBy, String order) throws Exception;
+    PageResponseDto getAllEmployee(GetAllEmployeesRequestDto getAllEmployeesRequestDto, UUID organizationCode) throws Exception;
 
-    String employeeLogin(String empEmail, String password);
+    String changeEmpPassword(String empEmail, String newPassword, UUID organizationCode);
 
-    String applyForCompensationWorkDay(String empEmail, LocalDate date);
+    SalaryResponseDto getEmployeeSalary(String empEmail, LocalDate fromDate, LocalDate toDate, UUID organizationCode);
 
-    String approveCompensationWorkDay(String empEmail, LocalDate date);
+    List<SalaryResponseDto> getAllEmployeeSalary(UUID organizationCode);
 
-    Map<LocalDate, LeaveStatus> getCompensationWorkDay(String empEmail);
-
-    String rejectCompensationWorkDay(String empEmail, LocalDate date);
+    SalaryResponseDto getEmployeeMonthlySalary(String empEmail, UUID organizationCode);
 }

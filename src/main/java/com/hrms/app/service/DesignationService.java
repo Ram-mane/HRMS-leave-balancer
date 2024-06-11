@@ -1,9 +1,11 @@
 package com.hrms.app.service;
 
 import com.hrms.app.dto.responseDto.EmployeeResponseDto;
+import com.hrms.app.dto.responseDto.PageResponseDto;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public interface DesignationService {
@@ -12,6 +14,5 @@ public interface DesignationService {
 
     List<String> getAllDesignation();
 
-    List<EmployeeResponseDto> getAllEmpWithDesignation(String designation);
-
+    PageResponseDto getAllEmpWithDesignation(String designation, int pageNo, UUID organizationCode) throws Exception;
 }

@@ -6,6 +6,8 @@ import com.hrms.app.Enum.EmployeeType;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.UUID;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,6 +22,7 @@ public class EmployeeUpdateRequestDto {
     EmployeeType empType;
     String empDesignation;
     String imgUrl;
-    int empSalary;
+    Integer empSalary;
+    Integer shiftNumber;
 
 }

@@ -13,10 +13,10 @@ import java.util.List;
 public class PageResponseDto {
 
     List<?> content;
-    int pageNo;
-    int pageSize;
-    int totalPages;
-    long totalElements;
-    boolean lastPage;
+    Integer pageNo;
+    Integer pageSize;
+    Integer totalPages;
+    Long totalElements;
+    Boolean lastPage;
 
 }
